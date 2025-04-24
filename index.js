@@ -1,47 +1,88 @@
-function urlQueryToPrisma(req, res, next) {
-  req.prismaQueryParams = {};
-  const { query } = req;
-  let orderByKey = null;
+// Basically, the properties on the formatter should correspond to params in the url query string.
+// So if you have url.com?take=5&skip=10, the take function will be called with a value of 5,
+// and the skip function called with a value of 10, modifying queryObj with whatever properties you add to it.
+const defaultFormatter = {
+  take: (queryObj, key, value) => (queryObj.take = value),
+  skip: (queryObj, key, value) => (queryObj.skip = value),
+  cursor: (queryObj, key, value) => (queryObj.cursor = { id: value }),
+  orderBy: (queryObj, key, value) => {
+    // Works with string and arrays of strings.
+    if (Array.isArray(value)) {
+      queryObj.orderBy = {};
+      value.forEach((e) => {
+        queryObj.orderBy[e] = 'asc';
+        // Save keys to an array for use in sortOrder later.
+        queryObj.orderByKeys = queryObj.orderByKeys
+          ? [...queryObj.orderByKeys, e]
+          : [e];
+      });
+    } else {
+      queryObj.orderBy = { [value]: 'asc' };
+      queryObj.orderByKeys = [value];
+    }
+  },
+  sortOrder: (queryObj, key, value) => {
+    // Works with string and arrays of strings.
+    // Assumes the first key in orderByKeys corresponds to the first value in sortOrder.
+    if (Array.isArray(value)) {
+      value.forEach((e) => {
+        const savedKey = queryObj.orderByKeys?.shift();
+        if (savedKey) queryObj.orderBy[savedKey] = e;
+      });
+    } else {
+      const savedKey = queryObj.orderByKeys?.shift();
+      if (savedKey) queryObj.orderBy[savedKey] = value;
+    }
+    delete queryObj.orderByKeys;
+  },
+  where: (queryObj, key, value) => {
+    // This is the default function that will be used. If no other formatter function is used, this one will.
+    // User can overwrite with a custom function that puts all conditions in 'includes', for instance.
+    queryObj.where = {
+      ...queryObj.where,
+      [key]: value,
+    };
+  },
+  setup: () => {
+    // For setup user may want to do in prep for their custom formatter functions.
+    return;
+  },
+  cleanup: () => {
+    // For any cleanup use may want to do after their custom formatter functions.
+    return;
+  },
+};
 
-  for (const key in query) {
-    // Everything from the url is a string. If value is a number in string format, parse it ready for prisma.
-    let value = isNaN(Number(query[key])) ? query[key] : Number(query[key]);
-    switch (key) {
-      case 'take': {
-        req.prismaQueryParams.take = value;
-        break;
-      }
+function urlQueryToPrisma(customFormatter = {}) {
+  // With custom formatter, user can customise how a property is formatted on the prismaQueryParams.
+  // Why is custom not overwriting existing?
+  const formatter = {
+    ...defaultFormatter,
+    ...customFormatter,
+  };
 
-      case 'skip': {
-        req.prismaQueryParams.skip = value;
-        break;
-      }
+  return (req, res, next) => {
+    req.prismaQueryParams = {};
+    const { query } = req;
 
-      case 'orderBy': {
-        orderByKey = value;
-        req.prismaQueryParams.orderBy = {
-          [orderByKey]: 'asc',
-        };
-        break;
-      }
+    formatter.setup(req.prismaQueryParams);
 
-      case 'sortOrder': {
-        req.prismaQueryParams.orderBy[orderByKey] = value;
-        break;
-      }
-
-      default: {
+    for (const key in query) {
+      // Turn value into number if possible.
+      let value = isNaN(Number(query[key])) ? query[key] : Number(query[key]);
+      // If there is a formatter defined for that key, use the function to build a properly formatted object.
+      if (formatter[key]) {
+        formatter[key](req.prismaQueryParams, key, value);
+      } else {
         // Assume anything else should be on the 'where' object property, as object properties.
-        if (req.prismaQueryParams.where === undefined) {
-          req.prismaQueryParams.where = { [key]: value };
-        } else {
-          req.prismaQueryParams.where[key] = value;
-        }
+        formatter.where(req.prismaQueryParams, key, value);
       }
     }
-  }
 
-  return next();
+    formatter.cleanup(req.prismaQueryParams);
+
+    return next();
+  };
 }
 
 module.exports = urlQueryToPrisma;

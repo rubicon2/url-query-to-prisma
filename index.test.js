@@ -15,7 +15,8 @@ describe('urlQueryToPrisma', () => {
     const res = httpMocks.createResponse();
     const next = jest.fn();
 
-    urlQueryToPrisma(req, res, next);
+    const middleware = urlQueryToPrisma();
+    middleware(req, res, next);
     expect(next).toHaveBeenCalledTimes(1);
   });
 
@@ -24,7 +25,8 @@ describe('urlQueryToPrisma', () => {
     const res = httpMocks.createResponse();
     const next = jest.fn();
 
-    urlQueryToPrisma(req, res, next);
+    const middleware = urlQueryToPrisma();
+    middleware(req, res, next);
     expect(req.prismaQueryParams).toEqual({});
   });
 
@@ -38,7 +40,8 @@ describe('urlQueryToPrisma', () => {
     const res = httpMocks.createResponse();
     const next = jest.fn();
 
-    urlQueryToPrisma(req, res, next);
+    const middleware = urlQueryToPrisma();
+    middleware(req, res, next);
     expect(req.prismaQueryParams.skip).toBe(5);
     expect(typeof req.prismaQueryParams.skip).toBe('number');
   });
@@ -53,9 +56,27 @@ describe('urlQueryToPrisma', () => {
     const res = httpMocks.createResponse();
     const next = jest.fn();
 
-    urlQueryToPrisma(req, res, next);
+    const middleware = urlQueryToPrisma();
+    middleware(req, res, next);
     expect(req.prismaQueryParams.take).toBe(3);
     expect(typeof req.prismaQueryParams.take).toBe('number');
+  });
+
+  it('should add a cursor property which is of type object which contains property id', () => {
+    const req = httpMocks.createRequest({
+      ...basicRequest,
+      query: {
+        cursor: '97',
+      },
+    });
+    const res = httpMocks.createResponse();
+    const next = jest.fn();
+
+    const middleware = urlQueryToPrisma();
+    middleware(req, res, next);
+    expect(req.prismaQueryParams.cursor).toEqual({
+      id: 97,
+    });
   });
 
   it('should add a orderBy property and value of type object if present in url', () => {
@@ -68,7 +89,8 @@ describe('urlQueryToPrisma', () => {
     const res = httpMocks.createResponse();
     const next = jest.fn();
 
-    urlQueryToPrisma(req, res, next);
+    const middleware = urlQueryToPrisma();
+    middleware(req, res, next);
     expect(req.prismaQueryParams.orderBy).toEqual({ name: 'asc' });
     expect(typeof req.prismaQueryParams.orderBy).toBe('object');
   });
@@ -84,7 +106,8 @@ describe('urlQueryToPrisma', () => {
     const res = httpMocks.createResponse();
     const next = jest.fn();
 
-    urlQueryToPrisma(req, res, next);
+    const middleware = urlQueryToPrisma();
+    middleware(req, res, next);
     expect(req.prismaQueryParams.orderBy).toEqual({ name: 'desc' });
   });
 
@@ -99,7 +122,8 @@ describe('urlQueryToPrisma', () => {
     const res = httpMocks.createResponse();
     const next = jest.fn();
 
-    urlQueryToPrisma(req, res, next);
+    const middleware = urlQueryToPrisma();
+    middleware(req, res, next);
     expect(req.prismaQueryParams.where).toEqual({
       name: 'billy',
       email: 'billy@billyzone.com',
@@ -117,7 +141,8 @@ describe('urlQueryToPrisma', () => {
     const res = httpMocks.createResponse();
     const next = jest.fn();
 
-    urlQueryToPrisma(req, res, next);
+    const middleware = urlQueryToPrisma();
+    middleware(req, res, next);
     expect(req.prismaQueryParams.where).toEqual({
       age: 32,
       mentalAge: 17,
@@ -138,7 +163,8 @@ describe('urlQueryToPrisma', () => {
     const res = httpMocks.createResponse();
     const next = jest.fn();
 
-    urlQueryToPrisma(req, res, next);
+    const middleware = urlQueryToPrisma();
+    middleware(req, res, next);
     expect(req.prismaQueryParams).toEqual({
       skip: 5,
       take: 10,
@@ -149,5 +175,165 @@ describe('urlQueryToPrisma', () => {
         author: 'billy',
       },
     });
+  });
+
+  it('should work with multiple orderBy and sortOrder params', () => {
+    const req = httpMocks.createRequest({
+      ...basicRequest,
+      query: {
+        orderBy: ['author', 'publishedDate'],
+        sortOrder: ['desc', 'asc'],
+      },
+    });
+    const res = httpMocks.createResponse();
+    const next = jest.fn();
+
+    const middleware = urlQueryToPrisma();
+    middleware(req, res, next);
+    expect(req.prismaQueryParams).toEqual({
+      orderBy: {
+        author: 'desc',
+        publishedDate: 'asc',
+      },
+    });
+  });
+
+  it('should not break if there are more orderBy params than sortOrder params', () => {
+    const req = httpMocks.createRequest({
+      ...basicRequest,
+      query: {
+        orderBy: ['author', 'publishedDate'],
+        sortOrder: 'desc',
+      },
+    });
+    const res = httpMocks.createResponse();
+    const next = jest.fn();
+
+    const middleware = urlQueryToPrisma();
+    middleware(req, res, next);
+    expect(req.prismaQueryParams).toEqual({
+      orderBy: {
+        author: 'desc',
+        publishedDate: 'asc',
+      },
+    });
+  });
+
+  it('should not break if there are less orderBy params than sortOrder params', () => {
+    const req = httpMocks.createRequest({
+      ...basicRequest,
+      query: {
+        orderBy: ['author'],
+        sortOrder: ['desc', 'desc'],
+      },
+    });
+    const res = httpMocks.createResponse();
+    const next = jest.fn();
+
+    const middleware = urlQueryToPrisma();
+    middleware(req, res, next);
+    expect(req.prismaQueryParams).toEqual({
+      orderBy: {
+        author: 'desc',
+      },
+    });
+  });
+
+  it('should not break if there is a sortOrder param with no orderBy params', () => {
+    const req = httpMocks.createRequest({
+      ...basicRequest,
+      query: {
+        sortOrder: 'desc',
+      },
+    });
+    const res = httpMocks.createResponse();
+    const next = jest.fn();
+
+    const middleware = urlQueryToPrisma();
+    middleware(req, res, next);
+    expect(req.prismaQueryParams).toEqual({});
+  });
+
+  it('should not break if there is a sortOrder params array with no orderBy params', () => {
+    const req = httpMocks.createRequest({
+      ...basicRequest,
+      query: {
+        sortOrder: ['desc', 'desc'],
+      },
+    });
+    const res = httpMocks.createResponse();
+    const next = jest.fn();
+
+    const middleware = urlQueryToPrisma();
+    middleware(req, res, next);
+    expect(req.prismaQueryParams).toEqual({});
+  });
+
+  it('should be able to add custom formatting to entries on the where property', () => {
+    const req = httpMocks.createRequest({
+      ...basicRequest,
+      query: {
+        firstParam: 'jimbo',
+        myParam: 'bilbo',
+      },
+    });
+    const res = httpMocks.createResponse();
+    const next = jest.fn();
+
+    const middleware = urlQueryToPrisma({
+      myParam: (obj, key, value) => {
+        obj.where = {
+          ...obj.where,
+          myParam: {
+            contains: value,
+          },
+        };
+      },
+    });
+    middleware(req, res, next);
+    expect(req.prismaQueryParams).toEqual({
+      where: {
+        firstParam: 'jimbo',
+        myParam: {
+          contains: 'bilbo',
+        },
+      },
+    });
+  });
+
+  it('should be able to add properties with a custom setup function', () => {
+    const req = httpMocks.createRequest({
+      query: {
+        stuff: '97',
+      },
+    });
+    const res = httpMocks.createResponse();
+    const next = jest.fn();
+
+    const middleware = urlQueryToPrisma({
+      setup: (obj) => {
+        obj.temp = 'Added in setup function';
+      },
+    });
+    middleware(req, res, next);
+    expect(req.prismaQueryParams.temp).toBe('Added in setup function');
+  });
+
+  it('should be able to clear properties with a custom cleanup function', () => {
+    const req = httpMocks.createRequest({
+      query: {
+        stuff: '97',
+      },
+    });
+    const res = httpMocks.createResponse();
+    const next = jest.fn();
+
+    const middleware = urlQueryToPrisma({
+      cleanup: (obj) => {
+        delete obj.where;
+      },
+    });
+    middleware(req, res, next);
+    expect(req.prismaQueryParams).toEqual({});
   });
 });
