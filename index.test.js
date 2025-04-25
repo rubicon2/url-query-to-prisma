@@ -9,12 +9,17 @@ const basicRequest = {
   },
 };
 
+let res;
+let next;
+
+beforeEach(() => {
+  res = httpMocks.createResponse();
+  next = jest.fn();
+});
+
 describe('urlQueryToPrisma', () => {
   it('should call next once the middleware is complete', () => {
     const req = httpMocks.createRequest(basicRequest);
-    const res = httpMocks.createResponse();
-    const next = jest.fn();
-
     const middleware = urlQueryToPrisma();
     middleware(req, res, next);
     expect(next).toHaveBeenCalledTimes(1);
@@ -22,9 +27,6 @@ describe('urlQueryToPrisma', () => {
 
   it('should add an empty object if there is no url query', () => {
     const req = httpMocks.createRequest(basicRequest);
-    const res = httpMocks.createResponse();
-    const next = jest.fn();
-
     const middleware = urlQueryToPrisma();
     middleware(req, res, next);
     expect(req.prismaQueryParams).toEqual({});
@@ -37,9 +39,6 @@ describe('urlQueryToPrisma', () => {
         skip: '5',
       },
     });
-    const res = httpMocks.createResponse();
-    const next = jest.fn();
-
     const middleware = urlQueryToPrisma();
     middleware(req, res, next);
     expect(req.prismaQueryParams.skip).toBe(5);
@@ -53,9 +52,6 @@ describe('urlQueryToPrisma', () => {
         take: '3',
       },
     });
-    const res = httpMocks.createResponse();
-    const next = jest.fn();
-
     const middleware = urlQueryToPrisma();
     middleware(req, res, next);
     expect(req.prismaQueryParams.take).toBe(3);
@@ -69,9 +65,6 @@ describe('urlQueryToPrisma', () => {
         cursor: '97',
       },
     });
-    const res = httpMocks.createResponse();
-    const next = jest.fn();
-
     const middleware = urlQueryToPrisma();
     middleware(req, res, next);
     expect(req.prismaQueryParams.cursor).toEqual({
@@ -86,9 +79,6 @@ describe('urlQueryToPrisma', () => {
         orderBy: 'name',
       },
     });
-    const res = httpMocks.createResponse();
-    const next = jest.fn();
-
     const middleware = urlQueryToPrisma();
     middleware(req, res, next);
     expect(req.prismaQueryParams.orderBy).toEqual({ name: 'asc' });
@@ -103,9 +93,6 @@ describe('urlQueryToPrisma', () => {
         sortOrder: 'desc',
       },
     });
-    const res = httpMocks.createResponse();
-    const next = jest.fn();
-
     const middleware = urlQueryToPrisma();
     middleware(req, res, next);
     expect(req.prismaQueryParams.orderBy).toEqual({ name: 'desc' });
@@ -119,9 +106,6 @@ describe('urlQueryToPrisma', () => {
         email: 'billy@billyzone.com',
       },
     });
-    const res = httpMocks.createResponse();
-    const next = jest.fn();
-
     const middleware = urlQueryToPrisma();
     middleware(req, res, next);
     expect(req.prismaQueryParams.where).toEqual({
@@ -138,9 +122,6 @@ describe('urlQueryToPrisma', () => {
         mentalAge: '17',
       },
     });
-    const res = httpMocks.createResponse();
-    const next = jest.fn();
-
     const middleware = urlQueryToPrisma();
     middleware(req, res, next);
     expect(req.prismaQueryParams.where).toEqual({
@@ -160,9 +141,6 @@ describe('urlQueryToPrisma', () => {
         author: 'billy',
       },
     });
-    const res = httpMocks.createResponse();
-    const next = jest.fn();
-
     const middleware = urlQueryToPrisma();
     middleware(req, res, next);
     expect(req.prismaQueryParams).toEqual({
@@ -185,9 +163,6 @@ describe('urlQueryToPrisma', () => {
         sortOrder: ['desc', 'asc'],
       },
     });
-    const res = httpMocks.createResponse();
-    const next = jest.fn();
-
     const middleware = urlQueryToPrisma();
     middleware(req, res, next);
     expect(req.prismaQueryParams).toEqual({
@@ -206,9 +181,6 @@ describe('urlQueryToPrisma', () => {
         sortOrder: 'desc',
       },
     });
-    const res = httpMocks.createResponse();
-    const next = jest.fn();
-
     const middleware = urlQueryToPrisma();
     middleware(req, res, next);
     expect(req.prismaQueryParams).toEqual({
@@ -227,9 +199,6 @@ describe('urlQueryToPrisma', () => {
         sortOrder: ['desc', 'desc'],
       },
     });
-    const res = httpMocks.createResponse();
-    const next = jest.fn();
-
     const middleware = urlQueryToPrisma();
     middleware(req, res, next);
     expect(req.prismaQueryParams).toEqual({
@@ -246,9 +215,6 @@ describe('urlQueryToPrisma', () => {
         sortOrder: 'desc',
       },
     });
-    const res = httpMocks.createResponse();
-    const next = jest.fn();
-
     const middleware = urlQueryToPrisma();
     middleware(req, res, next);
     expect(req.prismaQueryParams).toEqual({});
@@ -261,9 +227,6 @@ describe('urlQueryToPrisma', () => {
         sortOrder: ['desc', 'desc'],
       },
     });
-    const res = httpMocks.createResponse();
-    const next = jest.fn();
-
     const middleware = urlQueryToPrisma();
     middleware(req, res, next);
     expect(req.prismaQueryParams).toEqual({});
@@ -277,9 +240,6 @@ describe('urlQueryToPrisma', () => {
         myParam: 'bilbo',
       },
     });
-    const res = httpMocks.createResponse();
-    const next = jest.fn();
-
     const middleware = urlQueryToPrisma({
       myParam: (obj, key, value) => {
         obj.where = {
@@ -307,9 +267,6 @@ describe('urlQueryToPrisma', () => {
         stuff: '97',
       },
     });
-    const res = httpMocks.createResponse();
-    const next = jest.fn();
-
     const middleware = urlQueryToPrisma({
       setup: (obj) => {
         obj.temp = 'Added in setup function';
@@ -325,9 +282,6 @@ describe('urlQueryToPrisma', () => {
         stuff: '97',
       },
     });
-    const res = httpMocks.createResponse();
-    const next = jest.fn();
-
     const middleware = urlQueryToPrisma({
       cleanup: (obj) => {
         delete obj.where;
