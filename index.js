@@ -2,7 +2,6 @@ const defaultFormatter = require('./defaultFormatter');
 
 function urlQueryToPrisma(customFormatter = {}) {
   // With custom formatter, user can customise how a property is formatted on the prismaQueryParams.
-  // Why is custom not overwriting existing?
   const formatter = {
     ...defaultFormatter,
     ...customFormatter,
