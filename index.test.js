@@ -1,4 +1,4 @@
-const urlQueryToPrisma = require('./index.js');
+const { urlQueryToPrisma } = require('./index.js');
 const httpMocks = require('node-mocks-http');
 
 const basicRequest = {
