@@ -13,6 +13,23 @@ function where(filterType, options) {
   };
 }
 
+function groupWhere(groupKey, key, valueFormatter = (value) => value) {
+  // valueFormatter should be a function that returns the value with any necessary processing applied.
+  // e.g. turn a string into a date.
+
+  // inputQueryParam is not used - we want the value to relate to the groupKey, not the req.query input param.
+  return (queryObj, inputQueryParam, value) => {
+    queryObj.where = {
+      ...queryObj.where,
+      [groupKey]: {
+        ...queryObj.where?.[groupKey],
+        [key]: valueFormatter(value),
+      },
+    };
+  };
+}
+
 module.exports = {
   where,
+  groupWhere,
 };

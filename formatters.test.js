@@ -40,3 +40,46 @@ describe('where', () => {
     },
   );
 });
+
+describe('groupWhere', () => {
+  it('should allow user to group query params and output as a single object property', () => {
+    const fromDateMiddleware = formatters.groupWhere(
+      'dateRange',
+      'gte',
+      (value) => new Date(value),
+    );
+
+    const toDateMiddleware = formatters.groupWhere(
+      'dateRange',
+      'lte',
+      (value) => new Date(value),
+    );
+
+    fromDateMiddleware(queryObj, 'unusedKey', '2025-01-01');
+    toDateMiddleware(queryObj, 'unusedKey', '2025-12-31');
+    expect(queryObj).toEqual({
+      where: {
+        dateRange: {
+          gte: new Date('2025-01-01'),
+          lte: new Date('2025-12-31'),
+        },
+      },
+    });
+  });
+
+  it('should have a default valueFormatter function that just returns the value', () => {
+    const lte = formatters.groupWhere('count', 'lte');
+    const gte = formatters.groupWhere('count', 'gte');
+
+    lte(queryObj, 'unusedKey', 97);
+    gte(queryObj, 'unusedKey', 7);
+    expect(queryObj).toEqual({
+      where: {
+        count: {
+          lte: 97,
+          gte: 7,
+        },
+      },
+    });
+  });
+});
