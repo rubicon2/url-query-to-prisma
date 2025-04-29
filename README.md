@@ -138,6 +138,31 @@ const customFormatter = {
 app.use(urlQueryToPrisma(customFormatter));
 ```
 
+There is also a formatter function for grouping input query parameters and combining them into one object property. An example of where this might be useful is combining a fromDate and a toDate to get all database table entries with a publishedAt date between the two.
+
+```js
+import { urlQueryToPrisma, formatters } from 'url-to-prisma-query';
+
+// Blah blah express setup
+
+// An optional function is given to the groupWhere function to apply any required processing to the
+// values assigned to gte and lte. In this case the url query param string will get turned into a date.
+const customFormatter = {
+  fromDate: formatters.groupWhere('publishedAt', 'gte', (value) => new Date(value)),
+  toDate: formatters.groupWhere('publishedAt', 'lte', (value) => new Date(value))
+}
+
+app.use(urlQueryToPrisma(customFormatter));
+
+// Resulting object when given a query string of ?fromDate=2025-01-01&toDate=2025-12-31
+const prismaQueryParams = {
+  publishedAt: {
+    gte: // Date object containing fromDate.
+    lte: // Date object containing toDate.
+  }
+}
+```
+
 ## Default behaviour
 
 Using all the included supported query parameters will result in an object in the following format (with example values):
