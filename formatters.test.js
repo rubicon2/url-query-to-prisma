@@ -27,6 +27,20 @@ describe('where', () => {
     expect(queryObj.where.someKey.someOption).toEqual('someOptionValue');
   });
 
+  it('should process the value with the valueFormatter parameter, if supplied', () => {
+    const middleware = formatters.where('contains', {}, (value) =>
+      value.toUpperCase(),
+    );
+    middleware(queryObj, 'someDate', 'bananas');
+    expect(queryObj).toEqual({
+      where: {
+        someDate: {
+          contains: 'BANANAS',
+        },
+      },
+    });
+  });
+
   test.each([
     { whereType: 'lte' },
     { whereType: 'contains' },
