@@ -2,15 +2,24 @@
 // Options on the text is basically just to allow mode: 'insensitive',
 // which is required on postgreSQL or mongoDB to case-insensitive filtering.
 function where(filterType, options = {}, valueFormatter = (value) => value) {
-  return (queryObj, key, value) => {
-    queryObj.where = {
-      ...queryObj.where,
-      [key]: {
-        [filterType]: valueFormatter(value),
-        ...options,
-      },
+  if (filterType) {
+    return (queryObj, key, value) => {
+      queryObj.where = {
+        ...queryObj.where,
+        [key]: {
+          [filterType]: valueFormatter(value),
+          ...options,
+        },
+      };
     };
-  };
+  } else {
+    return (queryObj, key, value) => {
+      queryObj.where = {
+        ...queryObj.where,
+        [key]: valueFormatter(value),
+      };
+    };
+  }
 }
 
 function groupWhere(groupKey, key, valueFormatter = (value) => value) {

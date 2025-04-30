@@ -41,6 +41,16 @@ describe('where', () => {
     });
   });
 
+  it('should add the query param to the base where object if filterType is null, and ignore options', () => {
+    const middleware = formatters.where(null, { someOption: 'ignoreMe' });
+    middleware(queryObj, 'basicWhere', 'basicValue');
+    expect(queryObj).toEqual({
+      where: {
+        basicWhere: 'basicValue',
+      },
+    });
+  });
+
   test.each([
     { whereType: 'lte' },
     { whereType: 'contains' },
