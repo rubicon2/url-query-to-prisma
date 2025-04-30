@@ -290,4 +290,30 @@ describe('urlQueryToPrisma', () => {
     middleware(req, res, next);
     expect(req.prismaQueryParams).toEqual({});
   });
+
+  it('should ignore any query params that are assigned a null formatter function', () => {
+    const req = httpMocks.createRequest({
+      query: {
+        token: 'some long string which we want to ignore',
+        defaultParam: 'defaultParamValue',
+        customParam: 'some value that went through a custom formatter',
+      },
+    });
+    const middleware = urlQueryToPrisma({
+      token: null,
+      customParam: (obj, key, value) => {
+        obj.where = {
+          ...obj.where,
+          [key]: 'some custom formatted value',
+        };
+      },
+    });
+    middleware(req, res, next);
+    expect(req.prismaQueryParams).toEqual({
+      where: {
+        defaultParam: 'defaultParamValue',
+        customParam: 'some custom formatted value',
+      },
+    });
+  });
 });
