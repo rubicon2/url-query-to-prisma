@@ -1,6 +1,10 @@
 // Helper functions for customizing with customFormatter parameter.
 // Options on the text is basically just to allow mode: 'insensitive',
 // which is required on postgreSQL or mongoDB to case-insensitive filtering.
+// valueProcessor is a function that can be used to transform the query value.
+// All query values are strings by default but prisma will expect real numbers
+// and date objects for making comparisons to db table values. So you can use
+// the valueProcessor to turn the string into a number, or a date, etc.
 function where(filterType, options = {}, valueProcessor = (value) => value) {
   if (filterType) {
     return (queryObj, key, value) => {
