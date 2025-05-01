@@ -143,3 +143,4 @@ dist
 .gitignore
 .prettierignore
 .prettierrc
+eslint.config.*
