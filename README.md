@@ -1,6 +1,6 @@
 # url-query-to-prisma
 
-Middleware to turn a URL query into an object formatted to match the requirements to filter a Prisma ORM client query.
+Middleware to turn a URL query into an object formatted to match the object shape to filter a Prisma ORM client query.
 
 Suitable for something like a blogs page where you want the user to be able to search for blogs by a particular user, date range or sort them into date order, etc. Generally this is only intended for pretty basic queries encoded in the URL, but you may be able to extend it with custom formatters to fit your needs. How to do so is explained below.
 
@@ -10,7 +10,7 @@ The prisma query object ends up on ```req.prismaQueryParams```. The idea is, whe
 prismaClient.modelName.find(req.prismaQueryParams)
 ```
 
-Or if you want to programmatically define certain options in your route and take others from the URL (e.g. something as simple as orderBy, or a date range):
+Or if you want to programmatically define certain options in your route and take others from the URL (e.g. something as simple as orderBy, using skip and take or cursor for pagination):
 
 ```js
 prismaClient.modelName.find({
@@ -21,6 +21,8 @@ prismaClient.modelName.find({
 })
 ```
 
+Some kind of deep object merge function would make this a bit easier to read.
+
 ## Install
 
 ```bash
@@ -29,20 +31,50 @@ npm install url-query-to-prisma
 
 ## Usage
 
-An instance of the middleware is created by calling urlQueryToPrisma as a function. How each instance behaves can be customized by providing a customFormatter parameter. It should be of type object, and the middleware will match each query parameter to a property in the formatter object - which will contain a function - and then use that function to add that query parameter and value into the prisma query object in the desired format.
+An instance of the middleware is created by calling urlQueryToPrisma as a function.
 
-All params that can be automatically cast into numbers are, to save having to convert it later during the query.
+You will need to provide a customFormatter as the first parameter, to tell the middleware what query keys you want included on your prisma query, in what format and how the query values should be processed. Any query keys sent by the client which are not defined on the formatter will be ignored. This way, a bad actor will not be able to include different keys to the ones we are expecting.
+
+The customFormatter should be of type object. The middleware will match each query key to a property in the formatter object - which will contain a function - and then use that function to add that query key and value into the prisma query object in the desired format.
+
+The middleware will automatically add standard prisma stuff to the output, like take, skip, and orderBy. But it will not take any other query parameters unless explicitly told to in your custom formatter.
 
 ## Examples
 
-### Using the default formatter
+### Mapping query params and values to the prisma query object
 
 ```js
 import express from 'express';
-import { urlQueryToPrisma } from 'url-query-to-prisma';
+import { urlQueryToPrisma, formatters } from 'url-query-to-prisma';
+
+// Manually... it's a bit long, but you can alter the query object and process your value in any way you want.
+const manualFormatter = {
+  name: (obj, key, value) => {
+    obj.where = {
+      ...obj.where,
+      name: {
+        contains: value,
+        mode: 'insensitive'
+      }
+    }
+  },
+  age: (obj, key, value) => {
+    obj.where = {
+      ...obj.where,
+      age: Number(value)
+    }
+  }
+}
+
+// With the convenient where function, it is a lot cleaner,
+// although it has still ended up a bit overcomplicated, I think.
+const customFormatter = {
+  name: formatters.where('contains', { mode: 'insensitive' }),
+  age: formatters.where(null, {}, (value) => Number(value))
+}
 
 const app = express();
-app.use(urlQueryToPrisma());
+app.use(urlQueryToPrisma(customFormatter));
 
 app.listen(8080, () => console.log('Listening on port 8080'));
 ```
@@ -52,7 +84,10 @@ Given a url of: ```http://localhost:8080?name=jimbo&age=23```, the req.prismaQue
 ```js
 req.prismaQueryParams = {
   where: {
-    name: 'jimbo',
+    name: {
+      contains: 'jimbo',
+      mode: 'insensitive'
+    },
     age: 23
   }
 };
@@ -81,8 +116,8 @@ const customFormatter = {
   startDate: (obj, key, value) => {
     obj.where = {
       ...obj.where,
-      [key]: {
-        gte: value
+      startDate: {
+        gte: new Date(value)
       }
     }
   },
@@ -90,8 +125,8 @@ const customFormatter = {
   endDate: (obj, key, value) => {
     obj.where = {
       ...obj.where,
-      [key]: {
-        lte: value
+      endDate: {
+        lte: new Date(value)
       }
     }
   }
@@ -111,16 +146,18 @@ req.prismaQueryParams = {
       contains: 'billy'
     }
     startDate: {
-      gte: '2025-01-01'
+      gte: '2025-01-01' // Date obj representing this date.
     },
     endDate: {
-      lte: '2025-02-28'
+      lte: '2025-02-28' // Date obj representing this date.
     }
   }
 };
 ```
 
 ### Using formatter functions to easily customise formatters
+
+#### Where
 
 Instead of creating your own functions as in the above example, you can use the where formatter function as below.
 
@@ -138,18 +175,38 @@ const customFormatter = {
 app.use(urlQueryToPrisma(customFormatter));
 ```
 
-There is also a formatter function for grouping input query parameters and combining them into one object property. An example of where this might be useful is combining a fromDate and a toDate to get all database table entries with a publishedAt date between the two.
+The where function can take a filterType (i.e. 'contains', 'lte', 'gt', 'not'), an options object and a valueFormatter parameter which is a function that will process the value before adding it into the prismaQueryParams object. For example, turning a string into a date.
+
+If the filterType is null, the query key and value will just be added to the base where object.
 
 ```js
-import { urlQueryToPrisma, formatters } from 'url-to-prisma-query';
+formatters.where('lte', {}, (value) => new Date(value));
+```
+
+There are also some convenience methods on the processors object that can make this a bit less annoying to type.
+
+```js
+const { urlQueryToPrisma, formatters, processors } = require('url-query-to-prisma');
+
+formatters.where('lte', {}, processors.date);
+```
+
+#### Group where
+
+There is also a formatter function for grouping input query parameters and combining them into one object property. An example of where this might be useful is combining a fromDate and a toDate to get all database table entries with a publishedAt date between the two.
+
+The groupWhere function can take a groupKey (the name of the whole group, i.e. the name of the db table column you want to match against), a key ('gte', 'lte', etc.) and a valueFormatter function for doing any necessary processing to the value before adding it onto the prismaQueryParams object.
+
+```js
+import { urlQueryToPrisma, formatters, processors } from 'url-to-prisma-query';
 
 // Blah blah express setup
 
 // An optional function is given to the groupWhere function to apply any required processing to the
 // values assigned to gte and lte. In this case the url query param string will get turned into a date.
 const customFormatter = {
-  fromDate: formatters.groupWhere('publishedAt', 'gte', (value) => new Date(value)),
-  toDate: formatters.groupWhere('publishedAt', 'lte', (value) => new Date(value))
+  fromDate: formatters.groupWhere('publishedAt', 'gte', processors.date),
+  toDate: formatters.groupWhere('publishedAt', 'lte', processors.date)
 }
 
 app.use(urlQueryToPrisma(customFormatter));
@@ -157,8 +214,8 @@ app.use(urlQueryToPrisma(customFormatter));
 // Resulting object when given a query string of ?fromDate=2025-01-01&toDate=2025-12-31
 const prismaQueryParams = {
   publishedAt: {
-    gte: // Date object containing fromDate.
-    lte: // Date object containing toDate.
+    gte: '2025-01-01' // Date object representing this date.
+    lte: '2025-12-31' // Date object representing this date.
   }
 }
 ```
@@ -178,8 +235,13 @@ const prismaQueryParams = {
     author: 'asc',
     publishedDate: 'desc'
   }
-  where: {
-    // Query params with any other name go in here.
-  }
 }
+```
+
+If you want any of these to be excluded, you can do so by putting a null function for that query key on your customFormatter:
+
+```js
+app.use(urlQueryToPrisma({
+  cursor: null,
+}))
 ```
