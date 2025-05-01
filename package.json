@@ -1,0 +1,39 @@
+{
+  "name": "url-query-to-prisma",
+  "version": "1.0.0",
+  "description": "Express middleware to turn a url query into a formatted object suitable for inclusion in a Prisma ORM client query",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rubicon2/url-query-to-prisma.git"
+  },
+  "keywords": [
+    "express",
+    "middleware",
+    "prisma",
+    "orm",
+    "client",
+    "query",
+    "url",
+    "params"
+  ],
+  "author": "rubicon2",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/rubicon2/url-query-to-prisma/issues"
+  },
+  "homepage": "https://github.com/rubicon2/url-query-to-prisma#readme",
+  "devDependencies": {
+    "@eslint/js": "^9.25.1",
+    "eslint": "^9.25.1",
+    "eslint-config-prettier": "^10.1.2",
+    "eslint-plugin-jest": "^28.11.0",
+    "globals": "^16.0.0",
+    "jest": "^29.7.0",
+    "node-mocks-http": "^1.16.2",
+    "prettier": "^3.5.3"
+  }
+}

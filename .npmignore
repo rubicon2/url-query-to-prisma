@@ -137,3 +137,6 @@ dist
 
 # Mac OS
 .DS_Store
+
+# Tests
+*.test.*
