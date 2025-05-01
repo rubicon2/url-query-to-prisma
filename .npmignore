@@ -138,5 +138,8 @@ dist
 # Mac OS
 .DS_Store
 
-# Tests
+# Gubbins
 *.test.*
+.gitignore
+.prettierignore
+.prettierrc
