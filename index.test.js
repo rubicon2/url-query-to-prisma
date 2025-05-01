@@ -98,7 +98,7 @@ describe('urlQueryToPrisma', () => {
     expect(req.prismaQueryParams.orderBy).toEqual({ name: 'desc' });
   });
 
-  it('should include any other fields on the where object', () => {
+  it('should ignore any other fields not defined by the formatter', () => {
     const req = httpMocks.createRequest({
       ...basicRequest,
       query: {
@@ -108,10 +108,7 @@ describe('urlQueryToPrisma', () => {
     });
     const middleware = urlQueryToPrisma();
     middleware(req, res, next);
-    expect(req.prismaQueryParams.where).toEqual({
-      name: 'billy',
-      email: 'billy@billyzone.com',
-    });
+    expect(req.prismaQueryParams).toEqual({});
   });
 
   it('should convert any numbers in the query string into actual numbers on the where object', () => {
@@ -122,7 +119,20 @@ describe('urlQueryToPrisma', () => {
         mentalAge: '17',
       },
     });
-    const middleware = urlQueryToPrisma();
+    const middleware = urlQueryToPrisma({
+      age: (obj, key, value) => {
+        obj.where = {
+          ...obj.where,
+          age: Number(value),
+        };
+      },
+      mentalAge: (obj, key, value) => {
+        obj.where = {
+          ...obj.where,
+          mentalAge: Number(value),
+        };
+      },
+    });
     middleware(req, res, next);
     expect(req.prismaQueryParams.where).toEqual({
       age: 32,
@@ -141,7 +151,14 @@ describe('urlQueryToPrisma', () => {
         author: 'billy',
       },
     });
-    const middleware = urlQueryToPrisma();
+    const middleware = urlQueryToPrisma({
+      author: (obj, key, value) => {
+        obj.where = {
+          ...obj.where,
+          author: value,
+        };
+      },
+    });
     middleware(req, res, next);
     expect(req.prismaQueryParams).toEqual({
       skip: 5,
@@ -236,7 +253,6 @@ describe('urlQueryToPrisma', () => {
     const req = httpMocks.createRequest({
       ...basicRequest,
       query: {
-        firstParam: 'jimbo',
         myParam: 'bilbo',
       },
     });
@@ -253,7 +269,6 @@ describe('urlQueryToPrisma', () => {
     middleware(req, res, next);
     expect(req.prismaQueryParams).toEqual({
       where: {
-        firstParam: 'jimbo',
         myParam: {
           contains: 'bilbo',
         },
@@ -289,31 +304,5 @@ describe('urlQueryToPrisma', () => {
     });
     middleware(req, res, next);
     expect(req.prismaQueryParams).toEqual({});
-  });
-
-  it('should ignore any query params that are assigned a null formatter function', () => {
-    const req = httpMocks.createRequest({
-      query: {
-        token: 'some long string which we want to ignore',
-        defaultParam: 'defaultParamValue',
-        customParam: 'some value that went through a custom formatter',
-      },
-    });
-    const middleware = urlQueryToPrisma({
-      token: null,
-      customParam: (obj, key, value) => {
-        obj.where = {
-          ...obj.where,
-          [key]: 'some custom formatted value',
-        };
-      },
-    });
-    middleware(req, res, next);
-    expect(req.prismaQueryParams).toEqual({
-      where: {
-        defaultParam: 'defaultParamValue',
-        customParam: 'some custom formatted value',
-      },
-    });
   });
 });
