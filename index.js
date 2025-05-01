@@ -2,7 +2,7 @@ const defaultFormatter = require('./defaultFormatter');
 const formatters = require('./formatters');
 const processors = require('./processors');
 
-function urlQueryToPrisma(customFormatter = {}) {
+function urlQueryToPrisma(querySource = 'query', customFormatter = {}) {
   // With custom formatter, user can customise how a property is formatted on the prismaQueryParams.
   const formatter = {
     ...defaultFormatter,
@@ -11,7 +11,7 @@ function urlQueryToPrisma(customFormatter = {}) {
 
   return (req, res, next) => {
     req.prismaQueryParams = {};
-    const { query } = req;
+    const query = req[querySource];
 
     formatter.setup(req.prismaQueryParams);
 

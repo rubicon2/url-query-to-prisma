@@ -119,7 +119,7 @@ describe('urlQueryToPrisma', () => {
         mentalAge: '17',
       },
     });
-    const middleware = urlQueryToPrisma({
+    const middleware = urlQueryToPrisma('query', {
       age: (obj, key, value) => {
         obj.where = {
           ...obj.where,
@@ -151,7 +151,7 @@ describe('urlQueryToPrisma', () => {
         author: 'billy',
       },
     });
-    const middleware = urlQueryToPrisma({
+    const middleware = urlQueryToPrisma('query', {
       author: (obj, key, value) => {
         obj.where = {
           ...obj.where,
@@ -256,7 +256,7 @@ describe('urlQueryToPrisma', () => {
         myParam: 'bilbo',
       },
     });
-    const middleware = urlQueryToPrisma({
+    const middleware = urlQueryToPrisma('query', {
       myParam: (obj, key, value) => {
         obj.where = {
           ...obj.where,
@@ -282,7 +282,7 @@ describe('urlQueryToPrisma', () => {
         stuff: '97',
       },
     });
-    const middleware = urlQueryToPrisma({
+    const middleware = urlQueryToPrisma('query', {
       setup: (obj) => {
         obj.temp = 'Added in setup function';
       },
@@ -304,5 +304,37 @@ describe('urlQueryToPrisma', () => {
     });
     middleware(req, res, next);
     expect(req.prismaQueryParams).toEqual({});
+  });
+
+  it('should be able to take query keys and values from another source, such as body', () => {
+    const req = httpMocks.createRequest({
+      body: {
+        myParam: '97',
+        myDate: '2025-12-25',
+      },
+    });
+
+    const middleware = urlQueryToPrisma('body', {
+      myParam: (obj, key, value) => {
+        obj.where = {
+          ...obj.where,
+          myParam: Number(value),
+        };
+      },
+      myDate: (obj, key, value) => {
+        obj.where = {
+          ...obj.where,
+          myDate: new Date(value),
+        };
+      },
+    });
+
+    middleware(req, res, next);
+    expect(req.prismaQueryParams).toEqual({
+      where: {
+        myParam: 97,
+        myDate: new Date('2025-12-25'),
+      },
+    });
   });
 });
