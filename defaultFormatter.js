@@ -2,9 +2,9 @@
 // So if you have url.com?take=5&skip=10, the take function will be called with a value of 5,
 // and the skip function called with a value of 10, modifying queryObj with whatever properties you add to it.
 const defaultFormatter = {
-  take: (queryObj, key, value) => (queryObj.take = value),
-  skip: (queryObj, key, value) => (queryObj.skip = value),
-  cursor: (queryObj, key, value) => (queryObj.cursor = { id: value }),
+  take: (queryObj, key, value) => (queryObj.take = Number(value)),
+  skip: (queryObj, key, value) => (queryObj.skip = Number(value)),
+  cursor: (queryObj, key, value) => (queryObj.cursor = { id: Number(value) }),
   orderBy: (queryObj, key, value) => {
     // Works with string and arrays of strings.
     if (Array.isArray(value)) {
