@@ -337,4 +337,32 @@ describe('urlQueryToPrisma', () => {
       },
     });
   });
+
+  it('should remove the temp property from the final prismaQueryParams object', () => {
+    const req = httpMocks.createRequest({
+      body: {
+        orderBy: 'someColumn',
+      },
+    });
+
+    const middleware = urlQueryToPrisma('body', {
+      orderBy: (obj, key, value) => {
+        obj.where = {
+          ...obj.where,
+          orderBy: value,
+        };
+        obj.temp = {
+          ...obj.temp,
+          toBeRemoved: 'temp object should be gone by the end of the formatter',
+        };
+      },
+    });
+
+    middleware(req, res, next);
+    expect(req.prismaQueryParams).toEqual({
+      where: {
+        orderBy: 'someColumn',
+      },
+    });
+  });
 });

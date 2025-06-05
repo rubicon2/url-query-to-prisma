@@ -10,7 +10,7 @@ function urlQueryToPrisma(querySource = 'query', customFormatter = {}) {
   };
 
   return (req, res, next) => {
-    req.prismaQueryParams = {};
+    req.prismaQueryParams = { temp: {} };
     const query = req[querySource];
 
     formatter.setup(req.prismaQueryParams);
@@ -24,6 +24,7 @@ function urlQueryToPrisma(querySource = 'query', customFormatter = {}) {
       }
     }
 
+    delete req.prismaQueryParams.temp;
     formatter.cleanup(req.prismaQueryParams);
 
     return next();
