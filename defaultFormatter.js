@@ -12,28 +12,27 @@ const defaultFormatter = {
       value.forEach((e) => {
         queryObj.orderBy[e] = 'asc';
         // Save keys to an array for use in sortOrder later.
-        queryObj.orderByKeys = queryObj.orderByKeys
-          ? [...queryObj.orderByKeys, e]
-          : [e];
+        const orderByKeys = queryObj.temp.orderByKeys;
+        queryObj.temp.orderByKeys = orderByKeys ? [...orderByKeys, e] : [e];
       });
     } else {
       queryObj.orderBy = { [value]: 'asc' };
-      queryObj.orderByKeys = [value];
+      queryObj.temp.orderByKeys = [value];
     }
   },
   sortOrder: (queryObj, key, value) => {
     // Works with string and arrays of strings.
     // Assumes the first key in orderByKeys corresponds to the first value in sortOrder.
+    const orderByKeys = queryObj.temp.orderByKeys;
     if (Array.isArray(value)) {
       value.forEach((e) => {
-        const savedKey = queryObj.orderByKeys?.shift();
+        const savedKey = orderByKeys?.shift();
         if (savedKey) queryObj.orderBy[savedKey] = e;
       });
     } else {
-      const savedKey = queryObj.orderByKeys?.shift();
+      const savedKey = orderByKeys?.shift();
       if (savedKey) queryObj.orderBy[savedKey] = value;
     }
-    delete queryObj.orderByKeys;
   },
   where: (queryObj, key, value) => {
     // This is the default function that will be used. If no other formatter function is used, this one will.
