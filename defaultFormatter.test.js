@@ -192,4 +192,62 @@ describe('defaultFormatter', () => {
     middleware(req, res, next);
     expect(req.prismaQueryParams).toEqual({});
   });
+
+  it('should be able to sort by nested object values when given a path separated by dots', () => {
+    const req = httpMocks.createRequest({
+      ...basicRequest,
+      query: {
+        orderBy: 'owner.name',
+      },
+    });
+    const middleware = urlQueryToPrisma();
+    middleware(req, res, next);
+    expect(req.prismaQueryParams).toEqual({
+      orderBy: {
+        owner: {
+          name: 'asc',
+        },
+      },
+    });
+  });
+
+  it('should be able to sort by multiple nested object values when given paths separated by dots', () => {
+    const req = httpMocks.createRequest({
+      ...basicRequest,
+      query: {
+        orderBy: ['publishedAt', 'owner.name', 'owner.email'],
+      },
+    });
+    const middleware = urlQueryToPrisma();
+    middleware(req, res, next);
+    expect(req.prismaQueryParams).toEqual({
+      orderBy: {
+        publishedAt: 'asc',
+        owner: {
+          name: 'asc',
+          email: 'asc',
+        },
+      },
+    });
+  });
+
+  it('should be able correctly match orderBy dot paths and sortOrder query params', () => {
+    const req = httpMocks.createRequest({
+      ...basicRequest,
+      query: {
+        orderBy: ['publishedAt', 'owner.name'],
+        sortOrder: ['asc', 'desc'],
+      },
+    });
+    const middleware = urlQueryToPrisma();
+    middleware(req, res, next);
+    expect(req.prismaQueryParams).toEqual({
+      orderBy: {
+        publishedAt: 'asc',
+        owner: {
+          name: 'desc',
+        },
+      },
+    });
+  });
 });

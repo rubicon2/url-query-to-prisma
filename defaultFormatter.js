@@ -1,3 +1,6 @@
+const objectMerge = require('./objectMerge');
+const pathToNestedObj = require('./pathToNestedObj');
+
 // Basically, the properties on the formatter should correspond to params in the url query string.
 // So if you have url.com?take=5&skip=10, the take function will be called with a value of 5,
 // and the skip function called with a value of 10, modifying queryObj with whatever properties you add to it.
@@ -6,32 +9,49 @@ const defaultFormatter = {
   skip: (queryObj, key, value) => (queryObj.skip = Number(value)),
   cursor: (queryObj, key, value) => (queryObj.cursor = { id: Number(value) }),
   orderBy: (queryObj, key, value) => {
-    // Works with string and arrays of strings.
+    // Works with string and arrays of strings, and paths like you would use with sql, e.g. owner.name.
     if (Array.isArray(value)) {
       queryObj.orderBy = {};
       value.forEach((e) => {
-        queryObj.orderBy[e] = 'asc';
-        // Save keys to an array for use in sortOrder later.
-        const orderByKeys = queryObj.temp.orderByKeys;
-        queryObj.temp.orderByKeys = orderByKeys ? [...orderByKeys, e] : [e];
+        queryObj.orderBy = objectMerge(
+          queryObj.orderBy,
+          pathToNestedObj(e, '.', 'asc'),
+        );
+        // Save keys to an array for use in sortOrder later. In sortOrder function,
+        // an updated version of the orderBy obj value will be constructed out of the
+        // saved paths, and assigned the updated value.
+        const orderByPaths = queryObj.temp.orderByPaths;
+        queryObj.temp.orderByPaths = orderByPaths ? [...orderByPaths, e] : [e];
       });
     } else {
-      queryObj.orderBy = { [value]: 'asc' };
-      queryObj.temp.orderByKeys = [value];
+      queryObj.orderBy = pathToNestedObj(value, '.', 'asc');
+      queryObj.temp.orderByPaths = [value];
     }
   },
   sortOrder: (queryObj, key, value) => {
     // Works with string and arrays of strings.
     // Assumes the first key in orderByKeys corresponds to the first value in sortOrder.
-    const orderByKeys = queryObj.temp.orderByKeys;
+    const orderByPaths = queryObj.temp.orderByPaths;
     if (Array.isArray(value)) {
       value.forEach((e) => {
-        const savedKey = orderByKeys?.shift();
-        if (savedKey) queryObj.orderBy[savedKey] = e;
+        const savedPath = orderByPaths?.shift();
+        if (savedPath) {
+          const mega = pathToNestedObj(savedPath, '.', e);
+          queryObj.orderBy = {
+            ...queryObj.orderBy,
+            ...mega,
+          };
+        }
       });
     } else {
-      const savedKey = orderByKeys?.shift();
-      if (savedKey) queryObj.orderBy[savedKey] = value;
+      const savedPath = orderByPaths?.shift();
+      if (savedPath) {
+        const obj = pathToNestedObj(savedPath, '.', value);
+        queryObj.orderBy = {
+          ...queryObj.orderBy,
+          ...obj,
+        };
+      }
     }
   },
   where: (queryObj, key, value) => {
