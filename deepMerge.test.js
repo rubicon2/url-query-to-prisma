@@ -1,4 +1,4 @@
-const objectMerge = require('./objectMerge');
+const deepMerge = require('./deepMerge');
 
 describe('objectMerge', () => {
   it('should recursively merge objects', () => {
@@ -16,7 +16,7 @@ describe('objectMerge', () => {
       },
     };
 
-    expect(objectMerge(objA, objB)).toEqual({
+    expect(deepMerge(objA, objB)).toEqual({
       a: {
         b: 'c',
         d: 'e',
@@ -46,7 +46,7 @@ describe('objectMerge', () => {
       },
     };
 
-    expect(objectMerge(objA, objB)).toEqual({
+    expect(deepMerge(objA, objB)).toEqual({
       a: {
         b: {
           c: {
@@ -66,7 +66,7 @@ describe('objectMerge', () => {
       a: 'myValue',
     };
 
-    expect(objectMerge(objA, objB)).toEqual({
+    expect(deepMerge(objA, objB)).toEqual({
       a: 'myValue',
     });
   });
@@ -80,7 +80,7 @@ describe('objectMerge', () => {
       a: 4,
     };
 
-    expect(objectMerge(objA, objB)).toEqual({
+    expect(deepMerge(objA, objB)).toEqual({
       a: [1, 2, 3, 4],
     });
   });
@@ -94,7 +94,7 @@ describe('objectMerge', () => {
       a: [3, 4, 5],
     };
 
-    expect(objectMerge(objA, objB)).toEqual({
+    expect(deepMerge(objA, objB)).toEqual({
       a: [1, 2, 3, 4, 5],
     });
   });

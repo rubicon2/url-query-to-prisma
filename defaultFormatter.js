@@ -1,4 +1,4 @@
-const objectMerge = require('./objectMerge');
+const deepMerge = require('./deepMerge');
 const pathToNestedObj = require('./pathToNestedObj');
 
 // Basically, the properties on the formatter should correspond to params in the url query string.
@@ -13,7 +13,7 @@ const defaultFormatter = {
     if (Array.isArray(value)) {
       queryObj.orderBy = {};
       value.forEach((e) => {
-        queryObj.orderBy = objectMerge(
+        queryObj.orderBy = deepMerge(
           queryObj.orderBy,
           pathToNestedObj(e, '.', 'asc'),
         );

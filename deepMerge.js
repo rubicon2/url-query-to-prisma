@@ -1,4 +1,4 @@
-function objectMerge(a, b) {
+function deepMerge(a, b) {
   // Arrays are objects, so need to deal with separately and before the next base case.
   if (Array.isArray(a) || Array.isArray(b)) {
     return [
@@ -29,9 +29,9 @@ function objectMerge(a, b) {
   for (const key of allKeys) {
     const av = a[key];
     const bv = b[key];
-    merged[key] = objectMerge(av, bv);
+    merged[key] = deepMerge(av, bv);
   }
   return merged;
 }
 
-module.exports = objectMerge;
+module.exports = deepMerge;
