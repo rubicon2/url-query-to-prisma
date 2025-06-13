@@ -10,19 +10,6 @@ The prisma query object ends up on ```req.prismaQueryParams```. The idea is, whe
 prismaClient.modelName.find(req.prismaQueryParams)
 ```
 
-Or if you want to programmatically define certain options in your route and take others from the URL (e.g. something as simple as orderBy, using skip and take or cursor for pagination):
-
-```js
-prismaClient.modelName.find({
-  ...req.prismaQueryParams,
-  where: {
-    ownerId: req.params.ownerId
-  }
-})
-```
-
-Some kind of deep object merge function would make this a bit easier to read.
-
 ## Install
 
 ```bash
@@ -30,6 +17,39 @@ npm install url-query-to-prisma
 ```
 
 ## Usage
+
+Here's an example of a custom formatter made with the formatter helper functions and the output it generates. Values of foreign relations can be accessed with dots in the key, e.g. 'blogAuthor.name'.
+
+```js
+import { urlQueryToPrisma, formatters, processors } from 'urlQueryToPrisma';
+
+const customFormatter = {
+  'blogTitle': formatters.where('contains', { mode: 'insensitive' })
+  'blogAuthor.name': formatters.where('contains', { mode: 'insensitive' })
+  'authorCreatedFromDate': formatters.groupWhere('blogAuthor.createdAt', 'gte', processors.date)
+  'authorCreatedToDate': formatters.groupWhere('blogAuthor.createdAt', 'lte', processors.date)
+}
+
+app.use('/blogs', urlQueryToPrisma('query', customFormatter));
+
+// A request with the following url will give this result... 
+// /blogs?blogTitle=myBlog&blogAuthor.name=jimbo&authorCreatedFromDate=2020-01-01&authorCreatedToDate=2020-12-31
+const result = {
+  where: {
+    blogTitle: 'myBlog',
+    blogAuthor: {
+      name: {
+        contains: 'jimbo',
+        mode: 'insensitive'
+      },
+      createdAt: {
+        gte: '2020-01-01', // Date object representing this date.
+        lte: '2020-12-31'  // Date object representing this date.
+      }
+    }
+  }
+}
+```
 
 An instance of the middleware is created by calling urlQueryToPrisma as a function.
 
@@ -157,7 +177,7 @@ req.prismaQueryParams = {
 };
 ```
 
-### Using formatter functions to easily customise formatters
+### Using formatter functions to easily create a customFormatter
 
 #### Where
 
