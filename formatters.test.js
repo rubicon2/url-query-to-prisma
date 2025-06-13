@@ -63,6 +63,56 @@ describe('where', () => {
       expect(queryObj.where.someKey).toEqual({ [whereType]: 'someValue' });
     },
   );
+
+  it('should create a correctly nested object for accessing the table columns of a foreign relation', () => {
+    const middleware = formatters.where(null, {});
+    middleware(queryObj, 'blogOwner.name', 'jimmy');
+    expect(queryObj).toEqual({
+      where: {
+        blogOwner: {
+          name: 'jimmy',
+        },
+      },
+    });
+  });
+
+  it('should add options into nested object results if present in parameters', () => {
+    const middleware = formatters.where('contains', {
+      someOption: 'someOptionValue',
+    });
+    middleware(queryObj, 'one.two', 'someValue');
+    expect(queryObj.where.one.two.someOption).toEqual('someOptionValue');
+  });
+
+  it('should process the value inside a nested object with the valueFormatter parameter, if supplied', () => {
+    const middleware = formatters.where('contains', {}, (value) =>
+      value.toUpperCase(),
+    );
+    middleware(queryObj, 'fridge.shelf', 'bananas');
+    expect(queryObj).toEqual({
+      where: {
+        fridge: {
+          shelf: {
+            contains: 'BANANAS',
+          },
+        },
+      },
+    });
+  });
+
+  it('should add the query param to the base where object on a nested where if filterType is null, and ignore options', () => {
+    const middleware = formatters.where(null, {
+      someOption: 'ignoreMe',
+    });
+    middleware(queryObj, 'one.two', 'value');
+    expect(queryObj).toEqual({
+      where: {
+        one: {
+          two: 'value',
+        },
+      },
+    });
+  });
 });
 
 describe('groupWhere', () => {
@@ -106,54 +156,31 @@ describe('groupWhere', () => {
       },
     });
   });
-});
 
-describe('foreignWhere', () => {
-  it('should create a correctly nested object for accessing a the table columns of a foreign relation', () => {
-    const middleware = formatters.foreignWhere(null, {});
-    middleware(queryObj, 'blogOwner.name', 'jimmy');
-    expect(queryObj).toEqual({
-      where: {
-        blogOwner: {
-          name: 'jimmy',
-        },
-      },
-    });
-  });
-
-  it('should add options into its results if present in parameters', () => {
-    const middleware = formatters.foreignWhere('contains', {
-      someOption: 'someOptionValue',
-    });
-    middleware(queryObj, 'one.two', 'someValue');
-    expect(queryObj.where.one.two.someOption).toEqual('someOptionValue');
-  });
-
-  it('should process the value with the valueFormatter parameter, if supplied', () => {
-    const middleware = formatters.foreignWhere('contains', {}, (value) =>
-      value.toUpperCase(),
+  it('should create a correctly nested object for creating a groupWhere for the table column of a foreign relation', () => {
+    const fromDateMiddleware = formatters.groupWhere(
+      'user.blogs.createdAt',
+      'gte',
+      (value) => new Date(value),
     );
-    middleware(queryObj, 'fridge.shelf', 'bananas');
-    expect(queryObj).toEqual({
-      where: {
-        fridge: {
-          shelf: {
-            contains: 'BANANAS',
-          },
-        },
-      },
-    });
-  });
 
-  it('should add the query param to the base where object if filterType is null, and ignore options', () => {
-    const middleware = formatters.foreignWhere(null, {
-      someOption: 'ignoreMe',
-    });
-    middleware(queryObj, 'one.two', 'value');
+    const toDateMiddleware = formatters.groupWhere(
+      'user.blogs.createdAt',
+      'lte',
+      (value) => new Date(value),
+    );
+
+    fromDateMiddleware(queryObj, 'unusedKey', '2025-01-01');
+    toDateMiddleware(queryObj, 'unusedKey', '2025-12-31');
     expect(queryObj).toEqual({
       where: {
-        one: {
-          two: 'value',
+        user: {
+          blogs: {
+            createdAt: {
+              gte: new Date('2025-01-01'),
+              lte: new Date('2025-12-31'),
+            },
+          },
         },
       },
     });
