@@ -1,5 +1,5 @@
 const deepMerge = require('./deepMerge');
-const pathToNestedObj = require('./pathToNestedObj');
+const pathToNestedObj = require('path-to-nested-obj');
 
 // Basically, the properties on the formatter should correspond to params in the url query string.
 // So if you have url.com?take=5&skip=10, the take function will be called with a value of 5,
