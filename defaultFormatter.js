@@ -1,4 +1,4 @@
-const deepMerge = require('./deepMerge');
+const deepMerge = require('@rubicon2/deep-merge');
 const pathToNestedObj = require('path-to-nested-obj');
 
 // Basically, the properties on the formatter should correspond to params in the url query string.
