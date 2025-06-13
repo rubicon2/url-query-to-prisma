@@ -98,4 +98,47 @@ describe('objectMerge', () => {
       a: [1, 2, 3, 4, 5],
     });
   });
+
+  it('should work with null values', () => {
+    const objA = {
+      a: {
+        b: null,
+      },
+    };
+
+    const objB = {
+      a: {
+        b: 'myValue',
+        c: null,
+      },
+    };
+
+    expect(deepMerge(objA, objB)).toEqual({
+      a: {
+        b: [null, 'myValue'],
+        c: null,
+      },
+    });
+  });
+
+  it('should ignore undefined values', () => {
+    const objA = {
+      a: {
+        b: undefined,
+      },
+    };
+
+    const objB = {
+      a: {
+        b: 'myValue',
+        c: undefined,
+      },
+    };
+
+    expect(deepMerge(objA, objB)).toEqual({
+      a: {
+        b: 'myValue',
+      },
+    });
+  });
 });
