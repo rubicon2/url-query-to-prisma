@@ -2,6 +2,7 @@ import js from '@eslint/js';
 import globals from 'globals';
 import { defineConfig } from 'eslint/config';
 import pluginJest from 'eslint-plugin-jest';
+import eslintConfigPrettier from 'eslint-config-prettier';
 
 export default defineConfig([
   {
@@ -25,4 +26,5 @@ export default defineConfig([
       'jest/valid-expect': 'error',
     },
   },
+  eslintConfigPrettier,
 ]);
