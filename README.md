@@ -18,26 +18,31 @@ npm install url-query-to-prisma
 
 ## Usage
 
-Here's an example of a custom formatter made with the formatter helper functions and the output it generates. Values of foreign relations can be accessed with dots in the key, e.g. 'blogAuthor.name'.
+Here's an example of a custom formatter made with the formatter helper functions and the output it generates. Values of foreign relations can be accessed with dots in the key, e.g. 'blogAuthor.name'. With formatters.where, the url query parameter name must match the table column name you are trying to compare against, although I plan to change this at a later date.
 
 ```js
 import { urlQueryToPrisma, formatters, processors } from 'urlQueryToPrisma';
 
 const customFormatter = {
-  'blogTitle': formatters.where('contains', { mode: 'insensitive' })
-  'blogAuthor.name': formatters.where('contains', { mode: 'insensitive' })
-  'authorCreatedFromDate': formatters.groupWhere('blogAuthor.createdAt', 'gte', processors.date)
-  'authorCreatedToDate': formatters.groupWhere('blogAuthor.createdAt', 'lte', processors.date)
+  title: formatters.where('contains', { mode: 'insensitive' })
+  'author.name': formatters.where('contains', { mode: 'insensitive' })
+  fromDate: formatters.groupWhere('author.createdAt', 'gte', processors.date)
+  toDate: formatters.groupWhere('author.createdAt', 'lte', processors.date)
 }
 
-app.use('/blogs', urlQueryToPrisma('query', customFormatter));
+app.use('/blogs', 
+  urlQueryToPrisma('query', customFormatter), 
+  async (req, res, next) => {
+    const blogs = await prisma.blogs.findMany(req.prismaQueryObj);
+    res.send(blogs);
+});
 
 // A request with the following url will give this result... 
 // /blogs?blogTitle=myBlog&blogAuthor.name=jimbo&authorCreatedFromDate=2020-01-01&authorCreatedToDate=2020-12-31
 const result = {
   where: {
-    blogTitle: 'myBlog',
-    blogAuthor: {
+    title: 'myBlog',
+    author: {
       name: {
         contains: 'jimbo',
         mode: 'insensitive'
@@ -61,6 +66,14 @@ The customFormatter should be of type object. The middleware will match each que
 
 The middleware will automatically add standard prisma stuff to the output, like take, skip, and orderBy. But it will not take any other query parameters unless explicitly told to in your custom formatter.
 
+A third parameter of customOptions can be provided for middleware-wide options. Currently the only purpose for this is to change the default pathSeparator (the thing that allows accessing foreign relations values).
+
+```js
+urlQueryToPrisma('query', myCustomFormatter, { pathSeparator: '-' });
+```
+
+At some point I will move querySource from the first parameter into the customOptions object, as the query source is probably going to be 'query' most of the time.
+
 ## Examples
 
 ### Mapping query params and values to the prisma query object
@@ -71,7 +84,7 @@ import { urlQueryToPrisma, formatters } from 'url-query-to-prisma';
 
 // Manually... it's a bit long, but you can alter the query object and process your value in any way you want.
 const manualFormatter = {
-  name: (obj, key, value) => {
+  name: (obj, key, value, options) => {
     obj.where = {
       ...obj.where,
       name: {
@@ -80,7 +93,7 @@ const manualFormatter = {
       }
     }
   },
-  age: (obj, key, value) => {
+  age: (obj, key, value, options) => {
     obj.where = {
       ...obj.where,
       age: Number(value)
@@ -117,7 +130,29 @@ req.prismaQueryParams = {
 
 ### Writing a custom formatter
 
-Every formatter function is called with the prismaQueryParams object, the key (i.e. the name of the query parameter in the URL), and its value. The prismaQueryParams object is directly modified by each formatter function, to gradually build up the final query object. The spread syntax (...obj.where) is used to stop existing object properties from being deleted.
+Every formatter function is called with the prismaQueryParams object, the key (i.e. the name of the query parameter in the URL), and its value, and an options object (the user can add custom options upon instantiating an instance of the urlQueryToPrisma middleware, for example to use different path separators). The prismaQueryParams object is directly modified by each formatter function, to gradually build up the final query object. The spread syntax (...obj.where) is used to stop existing object properties from being deleted.
+
+The default formatters use the pathToQueryObj package to turn a path separated by a special character (by default, a dot) into a nested object, which can be used to access the columns of foreign relations. For example, if a blog has a foreign relation of an owner, you could access any of the owner's values by using 'owner.name', as the key, for instance. You can also use pathToQueryObj in your custom formatters in the same manner.
+
+The special character can be changed from the default '.' by supplying a 'pathSeparator' property on the customOptions object when urlQueryToPrisma is instantiated.
+
+```js
+const myCustomFormatter = {
+  // myOptions passed from urlQueryToPrisma to this function!
+  myUrlParam: (obj, key, value, options) => {
+    obj.where ={
+      ...obj.where,
+      ...pathToNestedObj('owner-name', options.pathSeparator, value)
+    }
+  }
+}
+
+const myOptions = {
+  pathSeparator: '-'
+}
+
+app.use(urlQueryToPrisma('query', myCustomFormatter, myOptions))
+```
 
 ```js
 import express from 'express';
@@ -125,7 +160,7 @@ import { urlQueryToPrisma } from 'url-query-to-prisma';
 
 const customFormatter = {
   // Where author contains value - case-insensitive partial match.
-  author: (obj, key, value) => {
+  author: (obj, key, value, options) => {
     obj.where = {
       ...obj.where,
       [key]: {
@@ -135,7 +170,7 @@ const customFormatter = {
     }
   },
   // Where startDate is greater than or equal to value.
-  startDate: (obj, key, value) => {
+  startDate: (obj, key, value, options) => {
     obj.where = {
       ...obj.where,
       startDate: {
@@ -144,7 +179,7 @@ const customFormatter = {
     }
   },
   // Where endDate is less than or equal to value.
-  endDate: (obj, key, value) => {
+  endDate: (obj, key, value, options) => {
     obj.where = {
       ...obj.where,
       endDate: {
