@@ -54,14 +54,6 @@ const defaultFormatter = {
       }
     }
   },
-  where: (queryObj, key, value) => {
-    // This is the default function that will be used. If no other formatter function is used, this one will.
-    // User can overwrite with a custom function that puts all conditions in 'includes', for instance.
-    queryObj.where = {
-      ...queryObj.where,
-      [key]: value,
-    };
-  },
   setup: () => {
     // For setup user may want to do in prep for their custom formatter functions.
     return;
