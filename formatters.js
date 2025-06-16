@@ -25,26 +25,24 @@ function where(customOptions = {}) {
 
   if (filterType) {
     return (queryObj, key, value, options) => {
-      const tableColName = formatterOptions.tableColName
-        ? formatterOptions.tableColName
-        : key;
       queryObj.where = {
         ...queryObj.where,
-        ...pathToNestedObj(tableColName, options.pathSeparator, {
-          [filterType]: valueProcessor(value),
-          ...filterOptions,
-        }),
+        ...pathToNestedObj(
+          formatterOptions.tableColName || key,
+          options.pathSeparator,
+          {
+            [filterType]: valueProcessor(value),
+            ...filterOptions,
+          },
+        ),
       };
     };
   } else {
     return (queryObj, key, value, options) => {
-      const tableColName = formatterOptions.tableColName
-        ? formatterOptions.tableColName
-        : key;
       queryObj.where = {
         ...queryObj.where,
         ...pathToNestedObj(
-          tableColName,
+          formatterOptions.tableColName || key,
           options.pathSeparator,
           valueProcessor(value),
         ),
