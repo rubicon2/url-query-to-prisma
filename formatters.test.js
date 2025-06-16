@@ -1,5 +1,6 @@
 const formatters = require('./formatters');
 
+const options = { pathSeparator: '.' };
 let queryObj;
 beforeEach(() => {
   queryObj = {};
@@ -23,7 +24,7 @@ describe('where', () => {
     const middleware = formatters.where('contains', {
       someOption: 'someOptionValue',
     });
-    middleware(queryObj, 'someKey', 'someValue');
+    middleware(queryObj, 'someKey', 'someValue', options);
     expect(queryObj.where.someKey.someOption).toEqual('someOptionValue');
   });
 
@@ -31,7 +32,7 @@ describe('where', () => {
     const middleware = formatters.where('contains', {}, (value) =>
       value.toUpperCase(),
     );
-    middleware(queryObj, 'someDate', 'bananas');
+    middleware(queryObj, 'someDate', 'bananas', options);
     expect(queryObj).toEqual({
       where: {
         someDate: {
@@ -43,7 +44,7 @@ describe('where', () => {
 
   it('should add the query param to the base where object if filterType is null, and ignore options', () => {
     const middleware = formatters.where(null, { someOption: 'ignoreMe' });
-    middleware(queryObj, 'basicWhere', 'basicValue');
+    middleware(queryObj, 'basicWhere', 'basicValue', options);
     expect(queryObj).toEqual({
       where: {
         basicWhere: 'basicValue',
@@ -59,14 +60,14 @@ describe('where', () => {
     'should modify the type of where to reflect the first parameter of $type',
     ({ whereType }) => {
       const middleware = formatters.where(whereType);
-      middleware(queryObj, 'someKey', 'someValue');
+      middleware(queryObj, 'someKey', 'someValue', options);
       expect(queryObj.where.someKey).toEqual({ [whereType]: 'someValue' });
     },
   );
 
   it('should create a correctly nested object for accessing the table columns of a foreign relation', () => {
     const middleware = formatters.where(null, {});
-    middleware(queryObj, 'blogOwner.name', 'jimmy');
+    middleware(queryObj, 'blogOwner.name', 'jimmy', options);
     expect(queryObj).toEqual({
       where: {
         blogOwner: {
@@ -80,7 +81,7 @@ describe('where', () => {
     const middleware = formatters.where('contains', {
       someOption: 'someOptionValue',
     });
-    middleware(queryObj, 'one.two', 'someValue');
+    middleware(queryObj, 'one.two', 'someValue', options);
     expect(queryObj.where.one.two.someOption).toEqual('someOptionValue');
   });
 
@@ -88,7 +89,7 @@ describe('where', () => {
     const middleware = formatters.where('contains', {}, (value) =>
       value.toUpperCase(),
     );
-    middleware(queryObj, 'fridge.shelf', 'bananas');
+    middleware(queryObj, 'fridge.shelf', 'bananas', options);
     expect(queryObj).toEqual({
       where: {
         fridge: {
@@ -104,11 +105,28 @@ describe('where', () => {
     const middleware = formatters.where(null, {
       someOption: 'ignoreMe',
     });
-    middleware(queryObj, 'one.two', 'value');
+    middleware(queryObj, 'one.two', 'value', options);
     expect(queryObj).toEqual({
       where: {
         one: {
           two: 'value',
+        },
+      },
+    });
+  });
+
+  it('should work with different path separators passed in the formatterOptions', () => {
+    const middleware = formatters.where(null, {}, (v) => v);
+
+    middleware(queryObj, 'one/two/three', 'myNestedValue', {
+      pathSeparator: '/',
+    });
+    expect(queryObj).toEqual({
+      where: {
+        one: {
+          two: {
+            three: 'myNestedValue',
+          },
         },
       },
     });
@@ -129,8 +147,8 @@ describe('groupWhere', () => {
       (value) => new Date(value),
     );
 
-    fromDateMiddleware(queryObj, 'unusedKey', '2025-01-01');
-    toDateMiddleware(queryObj, 'unusedKey', '2025-12-31');
+    fromDateMiddleware(queryObj, 'unusedKey', '2025-01-01', options);
+    toDateMiddleware(queryObj, 'unusedKey', '2025-12-31', options);
     expect(queryObj).toEqual({
       where: {
         dateRange: {
@@ -145,8 +163,8 @@ describe('groupWhere', () => {
     const lte = formatters.groupWhere('count', 'lte');
     const gte = formatters.groupWhere('count', 'gte');
 
-    lte(queryObj, 'unusedKey', 97);
-    gte(queryObj, 'unusedKey', 7);
+    lte(queryObj, 'unusedKey', 97, options);
+    gte(queryObj, 'unusedKey', 7, options);
     expect(queryObj).toEqual({
       where: {
         count: {
@@ -170,8 +188,8 @@ describe('groupWhere', () => {
       (value) => new Date(value),
     );
 
-    fromDateMiddleware(queryObj, 'unusedKey', '2025-01-01');
-    toDateMiddleware(queryObj, 'unusedKey', '2025-12-31');
+    fromDateMiddleware(queryObj, 'unusedKey', '2025-01-01', options);
+    toDateMiddleware(queryObj, 'unusedKey', '2025-12-31', options);
     expect(queryObj).toEqual({
       where: {
         user: {
@@ -179,6 +197,31 @@ describe('groupWhere', () => {
             createdAt: {
               gte: new Date('2025-01-01'),
               lte: new Date('2025-12-31'),
+            },
+          },
+        },
+      },
+    });
+  });
+
+  it('should work with different path separators passed in the formatterOptions', () => {
+    const middleware = formatters.groupWhere(
+      'one/two/three/myTableColName',
+      'lte',
+      (v) => v,
+    );
+
+    middleware(queryObj, 'lte', 'myLteValue', {
+      pathSeparator: '/',
+    });
+    expect(queryObj).toEqual({
+      where: {
+        one: {
+          two: {
+            three: {
+              myTableColName: {
+                lte: 'myLteValue',
+              },
             },
           },
         },

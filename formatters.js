@@ -10,20 +10,24 @@ const pathToNestedObj = require('path-to-nested-obj');
 // the valueProcessor to turn the string into a number, or a date, etc.
 function where(filterType, options = {}, valueProcessor = (value) => value) {
   if (filterType) {
-    return (queryObj, key, value) => {
+    return (queryObj, key, value, options) => {
       queryObj.where = {
         ...queryObj.where,
-        ...pathToNestedObj(key, '.', {
+        ...pathToNestedObj(key, options.pathSeparator, {
           [filterType]: valueProcessor(value),
           ...options,
         }),
       };
     };
   } else {
-    return (queryObj, key, value) => {
+    return (queryObj, key, value, options) => {
       queryObj.where = {
         ...queryObj.where,
-        ...pathToNestedObj(key, '.', valueProcessor(value)),
+        ...pathToNestedObj(
+          key,
+          options.pathSeparator,
+          valueProcessor(value),
+        ),
       };
     };
   }
@@ -31,10 +35,12 @@ function where(filterType, options = {}, valueProcessor = (value) => value) {
 
 function groupWhere(groupKey, key, valueProcessor = (value) => value) {
   // inputQueryParam is not used - we want the value to relate to the groupKey, not the req.query input param.
-  return (queryObj, inputQueryParam, value) => {
+  return (queryObj, inputQueryParam, value, options) => {
     queryObj.where = deepMerge(
       queryObj.where,
-      pathToNestedObj(groupKey, '.', { [key]: valueProcessor(value) }),
+      pathToNestedObj(groupKey, options.pathSeparator, {
+        [key]: valueProcessor(value),
+      }),
     );
   };
 }
