@@ -250,4 +250,24 @@ describe('defaultFormatter', () => {
       },
     });
   });
+
+  it('orderBy and sortOrder should use the path separator on the options', () => {
+    const req = httpMocks.createRequest({
+      ...basicRequest,
+      query: {
+        orderBy: ['owner/name', 'publishedAt'],
+        sortOrder: ['desc', 'asc'],
+      },
+    });
+    const middleware = urlQueryToPrisma({}, { pathSeparator: '/' });
+    middleware(req, res, next);
+    expect(req.prismaQueryParams).toEqual({
+      orderBy: {
+        owner: {
+          name: 'desc',
+        },
+        publishedAt: 'asc',
+      },
+    });
+  });
 });
