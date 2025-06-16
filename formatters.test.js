@@ -115,6 +115,29 @@ describe('where', () => {
     });
   });
 
+  it('should be able to change query output table column with formatterOptions.tableColName paramter', () => {
+    const middleware = formatters.where(
+      'includes',
+      { mode: 'insensitive' },
+      (v) => v,
+      { tableColName: 'one.two.three' },
+    );
+
+    middleware(queryObj, 'ignored.path', 'myNestedValue', options);
+    expect(queryObj).toEqual({
+      where: {
+        one: {
+          two: {
+            three: {
+              includes: 'myNestedValue',
+              mode: 'insensitive',
+            },
+          },
+        },
+      },
+    });
+  });
+
   it('should work with different path separators passed in the formatterOptions', () => {
     const middleware = formatters.where(null, {}, (v) => v);
 
