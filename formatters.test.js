@@ -21,17 +21,21 @@ test.each(
 
 describe('where', () => {
   it('should add options into its results if present in parameters', () => {
-    const middleware = formatters.where('contains', {
-      someOption: 'someOptionValue',
+    const middleware = formatters.where({
+      filterType: 'contains',
+      filterOptions: {
+        someOption: 'someOptionValue',
+      },
     });
     middleware(queryObj, 'someKey', 'someValue', options);
     expect(queryObj.where.someKey.someOption).toEqual('someOptionValue');
   });
 
   it('should process the value with the valueFormatter parameter, if supplied', () => {
-    const middleware = formatters.where('contains', {}, (value) =>
-      value.toUpperCase(),
-    );
+    const middleware = formatters.where({
+      filterType: 'contains',
+      valueProcessor: (value) => value.toUpperCase(),
+    });
     middleware(queryObj, 'someDate', 'bananas', options);
     expect(queryObj).toEqual({
       where: {
@@ -43,7 +47,9 @@ describe('where', () => {
   });
 
   it('should add the query param to the base where object if filterType is null, and ignore options', () => {
-    const middleware = formatters.where(null, { someOption: 'ignoreMe' });
+    const middleware = formatters.where({
+      filterOptions: { someOption: 'ignoreMe' },
+    });
     middleware(queryObj, 'basicWhere', 'basicValue', options);
     expect(queryObj).toEqual({
       where: {
@@ -59,14 +65,14 @@ describe('where', () => {
   ])(
     'should modify the type of where to reflect the first parameter of $type',
     ({ whereType }) => {
-      const middleware = formatters.where(whereType);
+      const middleware = formatters.where({ filterType: whereType });
       middleware(queryObj, 'someKey', 'someValue', options);
       expect(queryObj.where.someKey).toEqual({ [whereType]: 'someValue' });
     },
   );
 
   it('should create a correctly nested object for accessing the table columns of a foreign relation', () => {
-    const middleware = formatters.where(null, {});
+    const middleware = formatters.where();
     middleware(queryObj, 'blogOwner.name', 'jimmy', options);
     expect(queryObj).toEqual({
       where: {
@@ -78,17 +84,19 @@ describe('where', () => {
   });
 
   it('should add options into nested object results if present in parameters', () => {
-    const middleware = formatters.where('contains', {
-      someOption: 'someOptionValue',
+    const middleware = formatters.where({
+      filterType: 'contains',
+      filterOptions: { someOption: 'someOptionValue' },
     });
     middleware(queryObj, 'one.two', 'someValue', options);
     expect(queryObj.where.one.two.someOption).toEqual('someOptionValue');
   });
 
   it('should process the value inside a nested object with the valueFormatter parameter, if supplied', () => {
-    const middleware = formatters.where('contains', {}, (value) =>
-      value.toUpperCase(),
-    );
+    const middleware = formatters.where({
+      filterType: 'contains',
+      valueProcessor: (value) => value.toUpperCase(),
+    });
     middleware(queryObj, 'fridge.shelf', 'bananas', options);
     expect(queryObj).toEqual({
       where: {
@@ -102,8 +110,10 @@ describe('where', () => {
   });
 
   it('should add the query param to the base where object on a nested where if filterType is null, and ignore options', () => {
-    const middleware = formatters.where(null, {
-      someOption: 'ignoreMe',
+    const middleware = formatters.where({
+      filterOptions: {
+        someOption: 'ignoreMe',
+      },
     });
     middleware(queryObj, 'one.two', 'value', options);
     expect(queryObj).toEqual({
@@ -116,12 +126,11 @@ describe('where', () => {
   });
 
   it('should be able to change query output table column with formatterOptions.tableColName parameter', () => {
-    const middleware = formatters.where(
-      'includes',
-      { mode: 'insensitive' },
-      (v) => v,
-      { tableColName: 'one.two.three' },
-    );
+    const middleware = formatters.where({
+      filterType: 'includes',
+      filterOptions: { mode: 'insensitive' },
+      formatterOptions: { tableColName: 'one.two.three' },
+    });
 
     middleware(queryObj, 'ignored.path', 'myNestedValue', options);
     expect(queryObj).toEqual({
@@ -139,7 +148,7 @@ describe('where', () => {
   });
 
   it('should work with different path separators passed in the formatterOptions', () => {
-    const middleware = formatters.where(null, {}, (v) => v);
+    const middleware = formatters.where();
 
     middleware(queryObj, 'one/two/three', 'myNestedValue', {
       pathSeparator: '/',
