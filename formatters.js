@@ -25,9 +25,9 @@ function where(customOptions = {}) {
 
   if (filterType) {
     return (queryObj, key, value, options) => {
-      queryObj.where = {
-        ...queryObj.where,
-        ...pathToNestedObj(
+      queryObj.where = deepMerge(
+        queryObj.where,
+        pathToNestedObj(
           formatterOptions.tableColName || key,
           options.pathSeparator,
           {
@@ -35,18 +35,18 @@ function where(customOptions = {}) {
             ...filterOptions,
           },
         ),
-      };
+      );
     };
   } else {
     return (queryObj, key, value, options) => {
-      queryObj.where = {
-        ...queryObj.where,
-        ...pathToNestedObj(
+      queryObj.where = deepMerge(
+        queryObj.where,
+        pathToNestedObj(
           formatterOptions.tableColName || key,
           options.pathSeparator,
           valueProcessor(value),
         ),
-      };
+      );
     };
   }
 }

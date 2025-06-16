@@ -163,6 +163,30 @@ describe('where', () => {
       },
     });
   });
+
+  it('should be able to group multiple filter types for the same table column', () => {
+    const fromDate = formatters.where({
+      filterType: 'gte',
+      formatterOptions: { tableColName: 'publishedAt' },
+      valueProcessor: (v) => new Date(v),
+    });
+    const toDate = formatters.where({
+      filterType: 'lte',
+      formatterOptions: { tableColName: 'publishedAt' },
+      valueProcessor: (v) => new Date(v),
+    });
+
+    fromDate(queryObj, 'fromDate', '1992-01-01', options);
+    toDate(queryObj, 'toDate', '1992-12-25', options);
+    expect(queryObj).toEqual({
+      where: {
+        publishedAt: {
+          gte: new Date('1992-01-01'),
+          lte: new Date('1992-12-25'),
+        },
+      },
+    });
+  });
 });
 
 describe('groupWhere', () => {
