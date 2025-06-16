@@ -51,19 +51,6 @@ function where(customOptions = {}) {
   }
 }
 
-function groupWhere(groupKey, key, valueProcessor = (value) => value) {
-  // inputQueryParam is not used - we want the value to relate to the groupKey, not the req.query input param.
-  return (queryObj, inputQueryParam, value, options) => {
-    queryObj.where = deepMerge(
-      queryObj.where,
-      pathToNestedObj(groupKey, options.pathSeparator, {
-        [key]: valueProcessor(value),
-      }),
-    );
-  };
-}
-
 module.exports = {
   where,
-  groupWhere,
 };

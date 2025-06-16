@@ -187,96 +187,33 @@ describe('where', () => {
       },
     });
   });
-});
 
-describe('groupWhere', () => {
-  it('should allow user to group query params and output as a single object property', () => {
-    const fromDateMiddleware = formatters.groupWhere(
-      'dateRange',
-      'gte',
-      (value) => new Date(value),
-    );
-
-    const toDateMiddleware = formatters.groupWhere(
-      'dateRange',
-      'lte',
-      (value) => new Date(value),
-    );
-
-    fromDateMiddleware(queryObj, 'unusedKey', '2025-01-01', options);
-    toDateMiddleware(queryObj, 'unusedKey', '2025-12-31', options);
-    expect(queryObj).toEqual({
-      where: {
-        dateRange: {
-          gte: new Date('2025-01-01'),
-          lte: new Date('2025-12-31'),
-        },
+  it('should work with different path separators passed in the formatterOptions of a grouped query', () => {
+    const lte = formatters.where({
+      filterType: 'lte',
+      formatterOptions: {
+        tableColName: 'one/two/three/myTableColName',
       },
     });
-  });
 
-  it('should have a default valueFormatter function that just returns the value', () => {
-    const lte = formatters.groupWhere('count', 'lte');
-    const gte = formatters.groupWhere('count', 'gte');
-
-    lte(queryObj, 'unusedKey', 97, options);
-    gte(queryObj, 'unusedKey', 7, options);
-    expect(queryObj).toEqual({
-      where: {
-        count: {
-          lte: 97,
-          gte: 7,
-        },
+    const gte = formatters.where({
+      filterType: 'gte',
+      formatterOptions: {
+        tableColName: 'one/two/three/myTableColName',
       },
     });
-  });
 
-  it('should create a correctly nested object for creating a groupWhere for the table column of a foreign relation', () => {
-    const fromDateMiddleware = formatters.groupWhere(
-      'user.blogs.createdAt',
-      'gte',
-      (value) => new Date(value),
-    );
-
-    const toDateMiddleware = formatters.groupWhere(
-      'user.blogs.createdAt',
-      'lte',
-      (value) => new Date(value),
-    );
-
-    fromDateMiddleware(queryObj, 'unusedKey', '2025-01-01', options);
-    toDateMiddleware(queryObj, 'unusedKey', '2025-12-31', options);
-    expect(queryObj).toEqual({
-      where: {
-        user: {
-          blogs: {
-            createdAt: {
-              gte: new Date('2025-01-01'),
-              lte: new Date('2025-12-31'),
-            },
-          },
-        },
-      },
-    });
-  });
-
-  it('should work with different path separators passed in the formatterOptions', () => {
-    const middleware = formatters.groupWhere(
-      'one/two/three/myTableColName',
-      'lte',
-      (v) => v,
-    );
-
-    middleware(queryObj, 'lte', 'myLteValue', {
-      pathSeparator: '/',
-    });
+    const newOptions = { pathSeparator: '/' };
+    lte(queryObj, 'to', '9999', newOptions);
+    gte(queryObj, 'from', '-9999', newOptions);
     expect(queryObj).toEqual({
       where: {
         one: {
           two: {
             three: {
               myTableColName: {
-                lte: 'myLteValue',
+                gte: '-9999',
+                lte: '9999',
               },
             },
           },
