@@ -3,14 +3,11 @@ const formatters = require('./formatters');
 const processors = require('./processors');
 
 const defaultOptions = {
+  querySource: 'query',
   pathSeparator: '.',
 };
 
-function urlQueryToPrisma(
-  querySource = 'query',
-  customFormatter = {},
-  customOptions = {},
-) {
+function urlQueryToPrisma(customFormatter = {}, customOptions = {}) {
   const options = {
     ...defaultOptions,
     ...customOptions,
@@ -24,7 +21,7 @@ function urlQueryToPrisma(
 
   return (req, res, next) => {
     req.prismaQueryParams = { temp: {} };
-    const query = req[querySource];
+    const query = req[options.querySource];
 
     formatter.setup(req.prismaQueryParams);
 

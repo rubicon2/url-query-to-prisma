@@ -95,7 +95,7 @@ describe('defaultFormatter', () => {
         author: 'billy',
       },
     });
-    const middleware = urlQueryToPrisma('query', {
+    const middleware = urlQueryToPrisma({
       author: (obj, key, value) => {
         obj.where = {
           ...obj.where,

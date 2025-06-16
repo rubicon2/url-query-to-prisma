@@ -115,7 +115,7 @@ describe('where', () => {
     });
   });
 
-  it('should be able to change query output table column with formatterOptions.tableColName paramter', () => {
+  it('should be able to change query output table column with formatterOptions.tableColName parameter', () => {
     const middleware = formatters.where(
       'includes',
       { mode: 'insensitive' },

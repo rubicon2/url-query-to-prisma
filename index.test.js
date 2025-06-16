@@ -53,7 +53,7 @@ describe('urlQueryToPrisma', () => {
         mentalAge: '17',
       },
     });
-    const middleware = urlQueryToPrisma('query', {
+    const middleware = urlQueryToPrisma({
       age: (obj, key, value) => {
         obj.where = {
           ...obj.where,
@@ -81,7 +81,7 @@ describe('urlQueryToPrisma', () => {
         myParam: 'bilbo',
       },
     });
-    const middleware = urlQueryToPrisma('query', {
+    const middleware = urlQueryToPrisma({
       myParam: (obj, key, value) => {
         obj.where = {
           ...obj.where,
@@ -107,7 +107,7 @@ describe('urlQueryToPrisma', () => {
         stuff: '97',
       },
     });
-    const middleware = urlQueryToPrisma('query', {
+    const middleware = urlQueryToPrisma({
       setup: (obj) => {
         obj.someProperty = 'Added in setup function';
       },
@@ -139,20 +139,25 @@ describe('urlQueryToPrisma', () => {
       },
     });
 
-    const middleware = urlQueryToPrisma('body', {
-      myParam: (obj, key, value) => {
-        obj.where = {
-          ...obj.where,
-          myParam: Number(value),
-        };
+    const middleware = urlQueryToPrisma(
+      {
+        myParam: (obj, key, value) => {
+          obj.where = {
+            ...obj.where,
+            myParam: Number(value),
+          };
+        },
+        myDate: (obj, key, value) => {
+          obj.where = {
+            ...obj.where,
+            myDate: new Date(value),
+          };
+        },
       },
-      myDate: (obj, key, value) => {
-        obj.where = {
-          ...obj.where,
-          myDate: new Date(value),
-        };
+      {
+        querySource: 'body',
       },
-    });
+    );
 
     middleware(req, res, next);
     expect(req.prismaQueryParams).toEqual({
@@ -165,12 +170,12 @@ describe('urlQueryToPrisma', () => {
 
   it('should remove the temp property from the final prismaQueryParams object', () => {
     const req = httpMocks.createRequest({
-      body: {
+      query: {
         orderBy: 'someColumn',
       },
     });
 
-    const middleware = urlQueryToPrisma('body', {
+    const middleware = urlQueryToPrisma({
       orderBy: (obj, key, value) => {
         obj.where = {
           ...obj.where,
