@@ -51,6 +51,37 @@ function where(customOptions = {}) {
   }
 }
 
+function whereContains(customOptions = {}) {
+  const defaultOptions = {
+    // Some dbs are not case sensitive, in which case this will do nothing.
+    caseSensitive: true,
+  };
+
+  const options = {
+    ...defaultOptions,
+    ...customOptions,
+  };
+  const { caseSensitive, ...rest } = options;
+
+  // When prisma client is generated for certain db types, which are case-insensitive by design,
+  // using the mode property will throw an error. Therefore, whereContains will default to not using
+  // mode. This means this function will run case-sensitive queries on postgreSQL and mongoDB dbs,
+  // unless caseSensitive is set to false, in which case the mode object will be included in the
+  // prismaQueryObj.
+  const modeOptions = {};
+  if (!caseSensitive) modeOptions.mode = 'insensitive';
+
+  return where({
+    ...rest,
+    filterType: 'contains',
+    filterOptions: {
+      ...rest.filterOptions,
+      ...modeOptions,
+    },
+  });
+}
+
 module.exports = {
   where,
+  whereContains,
 };

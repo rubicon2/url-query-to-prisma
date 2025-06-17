@@ -222,3 +222,80 @@ describe('where', () => {
     });
   });
 });
+
+describe('whereContains', () => {
+  it('should default to creating an object structure without a mode property', () => {
+    const partialMatcher = formatters.whereContains();
+    partialMatcher(queryObj, 'myKey', 'myValue', options);
+    expect(queryObj).toEqual({
+      where: {
+        myKey: {
+          contains: 'myValue',
+        },
+      },
+    });
+  });
+
+  it('should use mode: insensitive when caseSensitive customOptions property set to false', () => {
+    const sensitive = formatters.whereContains({ caseSensitive: false });
+    sensitive(queryObj, 'myKey', 'myValue', options);
+    expect(queryObj).toEqual({
+      where: {
+        myKey: {
+          contains: 'myValue',
+          mode: 'insensitive',
+        },
+      },
+    });
+  });
+
+  it('should ignore filterType on customsOption parameter', () => {
+    const partialMatcher = formatters.whereContains({
+      caseSensitive: false,
+      filterType: 'lte',
+    });
+    partialMatcher(queryObj, 'myKey', 'myValue', options);
+    expect(queryObj).toEqual({
+      where: {
+        myKey: {
+          contains: 'myValue',
+          mode: 'insensitive',
+        },
+      },
+    });
+  });
+
+  it('should overwrite default options with any other customsOption properties if provided', () => {
+    const partialMatcher = formatters.whereContains({
+      caseSensitive: false,
+      formatterOptions: { tableColName: 'name' },
+      filterOptions: { myCustomThing: 'whatever' },
+    });
+    partialMatcher(queryObj, 'myKey', 'myValue', options);
+    expect(queryObj).toEqual({
+      where: {
+        name: {
+          contains: 'myValue',
+          mode: 'insensitive',
+          myCustomThing: 'whatever',
+        },
+      },
+    });
+  });
+
+  it('should work with nested paths', () => {
+    const partialMatcher = formatters.whereContains({
+      formatterOptions: { tableColName: 'owner.name' },
+    });
+    partialMatcher(queryObj, 'myKey', 'myValue', options);
+    expect(queryObj).toEqual({
+      where: {
+        owner: {
+          name: {
+            contains: 'myValue',
+          },
+        },
+      },
+    });
+  });
+});
