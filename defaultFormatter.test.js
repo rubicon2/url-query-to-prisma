@@ -95,7 +95,7 @@ describe('defaultFormatter', () => {
         author: 'billy',
       },
     });
-    const middleware = urlQueryToPrisma('query', {
+    const middleware = urlQueryToPrisma({
       author: (obj, key, value) => {
         obj.where = {
           ...obj.where,
@@ -247,6 +247,26 @@ describe('defaultFormatter', () => {
         owner: {
           name: 'desc',
         },
+      },
+    });
+  });
+
+  it('orderBy and sortOrder should use the path separator on the options', () => {
+    const req = httpMocks.createRequest({
+      ...basicRequest,
+      query: {
+        orderBy: ['owner/name', 'publishedAt'],
+        sortOrder: ['desc', 'asc'],
+      },
+    });
+    const middleware = urlQueryToPrisma({}, { pathSeparator: '/' });
+    middleware(req, res, next);
+    expect(req.prismaQueryParams).toEqual({
+      orderBy: {
+        owner: {
+          name: 'desc',
+        },
+        publishedAt: 'asc',
       },
     });
   });

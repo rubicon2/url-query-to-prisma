@@ -8,14 +8,14 @@ const defaultFormatter = {
   take: (queryObj, key, value) => (queryObj.take = Number(value)),
   skip: (queryObj, key, value) => (queryObj.skip = Number(value)),
   cursor: (queryObj, key, value) => (queryObj.cursor = { id: Number(value) }),
-  orderBy: (queryObj, key, value) => {
+  orderBy: (queryObj, key, value, options) => {
     // Works with string and arrays of strings, and paths like you would use with sql, e.g. owner.name.
     if (Array.isArray(value)) {
       queryObj.orderBy = {};
       value.forEach((e) => {
         queryObj.orderBy = deepMerge(
           queryObj.orderBy,
-          pathToNestedObj(e, '.', 'asc'),
+          pathToNestedObj(e, options.pathSeparator, 'asc'),
         );
         // Save keys to an array for use in sortOrder later. In sortOrder function,
         // an updated version of the orderBy obj value will be constructed out of the
@@ -24,11 +24,11 @@ const defaultFormatter = {
         queryObj.temp.orderByPaths = orderByPaths ? [...orderByPaths, e] : [e];
       });
     } else {
-      queryObj.orderBy = pathToNestedObj(value, '.', 'asc');
+      queryObj.orderBy = pathToNestedObj(value, options.pathSeparator, 'asc');
       queryObj.temp.orderByPaths = [value];
     }
   },
-  sortOrder: (queryObj, key, value) => {
+  sortOrder: (queryObj, key, value, options) => {
     // Works with string and arrays of strings.
     // Assumes the first key in orderByKeys corresponds to the first value in sortOrder.
     const orderByPaths = queryObj.temp.orderByPaths;
@@ -36,7 +36,7 @@ const defaultFormatter = {
       value.forEach((e) => {
         const savedPath = orderByPaths?.shift();
         if (savedPath) {
-          const mega = pathToNestedObj(savedPath, '.', e);
+          const mega = pathToNestedObj(savedPath, options.pathSeparator, e);
           queryObj.orderBy = {
             ...queryObj.orderBy,
             ...mega,
@@ -46,21 +46,13 @@ const defaultFormatter = {
     } else {
       const savedPath = orderByPaths?.shift();
       if (savedPath) {
-        const obj = pathToNestedObj(savedPath, '.', value);
+        const obj = pathToNestedObj(savedPath, options.pathSeparator, value);
         queryObj.orderBy = {
           ...queryObj.orderBy,
           ...obj,
         };
       }
     }
-  },
-  where: (queryObj, key, value) => {
-    // This is the default function that will be used. If no other formatter function is used, this one will.
-    // User can overwrite with a custom function that puts all conditions in 'includes', for instance.
-    queryObj.where = {
-      ...queryObj.where,
-      [key]: value,
-    };
   },
   setup: () => {
     // For setup user may want to do in prep for their custom formatter functions.
