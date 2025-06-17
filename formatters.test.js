@@ -129,7 +129,7 @@ describe('where', () => {
     const middleware = formatters.where({
       filterType: 'includes',
       filterOptions: { mode: 'insensitive' },
-      formatterOptions: { tableColName: 'one.two.three' },
+      tableColName: 'one.two.three',
     });
 
     middleware(queryObj, 'ignored.path', 'myNestedValue', options);
@@ -167,12 +167,12 @@ describe('where', () => {
   it('should be able to group multiple filter types for the same table column', () => {
     const fromDate = formatters.where({
       filterType: 'gte',
-      formatterOptions: { tableColName: 'publishedAt' },
+      tableColName: 'publishedAt',
       valueProcessor: (v) => new Date(v),
     });
     const toDate = formatters.where({
       filterType: 'lte',
-      formatterOptions: { tableColName: 'publishedAt' },
+      tableColName: 'publishedAt',
       valueProcessor: (v) => new Date(v),
     });
 
@@ -191,16 +191,12 @@ describe('where', () => {
   it('should work with different path separators passed in the formatterOptions of a grouped query', () => {
     const lte = formatters.where({
       filterType: 'lte',
-      formatterOptions: {
-        tableColName: 'one/two/three/myTableColName',
-      },
+      tableColName: 'one/two/three/myTableColName',
     });
 
     const gte = formatters.where({
       filterType: 'gte',
-      formatterOptions: {
-        tableColName: 'one/two/three/myTableColName',
-      },
+      tableColName: 'one/two/three/myTableColName',
     });
 
     const newOptions = { pathSeparator: '/' };
@@ -268,7 +264,7 @@ describe('whereContains', () => {
   it('should overwrite default options with any other customsOption properties if provided', () => {
     const partialMatcher = formatters.whereContains({
       caseSensitive: false,
-      formatterOptions: { tableColName: 'name' },
+      tableColName: 'name',
       filterOptions: { myCustomThing: 'whatever' },
     });
     partialMatcher(queryObj, 'myKey', 'myValue', options);
@@ -285,7 +281,7 @@ describe('whereContains', () => {
 
   it('should work with nested paths', () => {
     const partialMatcher = formatters.whereContains({
-      formatterOptions: { tableColName: 'owner.name' },
+      tableColName: 'owner.name',
     });
     partialMatcher(queryObj, 'myKey', 'myValue', options);
     expect(queryObj).toEqual({

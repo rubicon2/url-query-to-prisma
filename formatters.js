@@ -13,28 +13,23 @@ function where(customOptions = {}) {
     filterType: null,
     filterOptions: {},
     valueProcessor: (value) => value,
-    formatterOptions: {},
+    tableColName: null,
   };
 
   const options = {
     ...defaultOptions,
     ...customOptions,
   };
-  const { filterType, filterOptions, valueProcessor, formatterOptions } =
-    options;
+  const { filterType, filterOptions, valueProcessor, tableColName } = options;
 
   if (filterType) {
     return (queryObj, key, value, options) => {
       queryObj.where = deepMerge(
         queryObj.where,
-        pathToNestedObj(
-          formatterOptions.tableColName || key,
-          options.pathSeparator,
-          {
-            [filterType]: valueProcessor(value),
-            ...filterOptions,
-          },
-        ),
+        pathToNestedObj(tableColName || key, options.pathSeparator, {
+          [filterType]: valueProcessor(value),
+          ...filterOptions,
+        }),
       );
     };
   } else {
@@ -42,7 +37,7 @@ function where(customOptions = {}) {
       queryObj.where = deepMerge(
         queryObj.where,
         pathToNestedObj(
-          formatterOptions.tableColName || key,
+          tableColName || key,
           options.pathSeparator,
           valueProcessor(value),
         ),
