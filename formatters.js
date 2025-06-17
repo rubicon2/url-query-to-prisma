@@ -8,14 +8,14 @@ const pathToNestedObj = require('path-to-nested-obj');
 // All query values are strings by default but prisma will expect real numbers
 // and date objects for making comparisons to db table values. So you can use
 // the valueProcessor to turn the string into a number, or a date, etc.
-const defaultOptions = {
-  filterType: null,
-  filterOptions: {},
-  valueProcessor: (value) => value,
-  formatterOptions: {},
-};
-
 function where(customOptions = {}) {
+  const defaultOptions = {
+    filterType: null,
+    filterOptions: {},
+    valueProcessor: (value) => value,
+    formatterOptions: {},
+  };
+
   const options = {
     ...defaultOptions,
     ...customOptions,
