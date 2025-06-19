@@ -37,7 +37,7 @@
     "prettier": "^3.5.3"
   },
   "dependencies": {
-    "@rubicon2/deep-merge": "^1.0.1",
+    "@rubicon2/deep-merge": "^1.1.0",
     "path-to-nested-obj": "^1.0.0"
   }
 }
