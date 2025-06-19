@@ -71,7 +71,7 @@ describe('defaultFormatter', () => {
     expect(typeof req.prismaQueryParams.orderBy).toBe('object');
   });
 
-  it('should set orderBy[fieldName] property value to that of sortOrder if present in url', () => {
+  it('should set orderBy property value to that of sortOrder if present in url', () => {
     const req = httpMocks.createRequest({
       ...basicRequest,
       query: {
@@ -127,10 +127,7 @@ describe('defaultFormatter', () => {
     const middleware = urlQueryToPrisma();
     middleware(req, res, next);
     expect(req.prismaQueryParams).toEqual({
-      orderBy: {
-        author: 'desc',
-        publishedDate: 'asc',
-      },
+      orderBy: [{ author: 'desc' }, { publishedDate: 'asc' }],
     });
   });
 
@@ -145,10 +142,7 @@ describe('defaultFormatter', () => {
     const middleware = urlQueryToPrisma();
     middleware(req, res, next);
     expect(req.prismaQueryParams).toEqual({
-      orderBy: {
-        author: 'desc',
-        publishedDate: 'asc',
-      },
+      orderBy: [{ author: 'desc' }, { publishedDate: 'asc' }],
     });
   });
 
@@ -221,13 +215,15 @@ describe('defaultFormatter', () => {
     const middleware = urlQueryToPrisma();
     middleware(req, res, next);
     expect(req.prismaQueryParams).toEqual({
-      orderBy: {
-        publishedAt: 'asc',
-        owner: {
-          name: 'asc',
-          email: 'asc',
+      orderBy: [
+        { publishedAt: 'asc' },
+        {
+          owner: {
+            name: 'asc',
+            email: 'asc',
+          },
         },
-      },
+      ],
     });
   });
 
@@ -242,12 +238,14 @@ describe('defaultFormatter', () => {
     const middleware = urlQueryToPrisma();
     middleware(req, res, next);
     expect(req.prismaQueryParams).toEqual({
-      orderBy: {
-        publishedAt: 'asc',
-        owner: {
-          name: 'desc',
+      orderBy: [
+        { publishedAt: 'asc' },
+        {
+          owner: {
+            name: 'desc',
+          },
         },
-      },
+      ],
     });
   });
 
@@ -262,12 +260,16 @@ describe('defaultFormatter', () => {
     const middleware = urlQueryToPrisma({}, { pathSeparator: '/' });
     middleware(req, res, next);
     expect(req.prismaQueryParams).toEqual({
-      orderBy: {
-        owner: {
-          name: 'desc',
+      orderBy: [
+        {
+          owner: {
+            name: 'desc',
+          },
         },
-        publishedAt: 'asc',
-      },
+        {
+          publishedAt: 'asc',
+        },
+      ],
     });
   });
 });
