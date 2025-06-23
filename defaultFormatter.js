@@ -29,10 +29,9 @@ const defaultFormatter = {
       );
       orderByPaths.push(path);
     }
-    // Turn orderBy object into an array of objects, representing each sub-object, but only the first layer.
-    const orderByArray = objToArray(orderBy);
-    queryObj.orderBy = orderByArray;
-    // Save paths so object structure can be re-created by sortOrder if it is used.
+    // Prisma expects an array for orderBy.
+    queryObj.orderBy = objToArray(orderBy);
+    // Save paths so object structure can be re-created by sortOrder if that query param is used.
     queryObj.temp.orderByPaths = orderByPaths;
   },
   sortOrder: (queryObj, key, value, options) => {
@@ -59,11 +58,11 @@ const defaultFormatter = {
       }
     }
     // Use mergeArraysInPlace to merge into existing orderBy array on queryObj.
-    const orderByArray = objToArray(updatedOrderBy);
+    const updatedOrderByArray = objToArray(updatedOrderBy);
     const discardOldValue = (x, y) => y;
     queryObj.orderBy = mergeArraysInPlace(
       queryObj.orderBy,
-      orderByArray,
+      updatedOrderByArray,
       // Use deepMerge on each pair of elements to allow nested objects, fields, etc.
       (a, b) => deepMerge(a, b, discardOldValue),
     );
