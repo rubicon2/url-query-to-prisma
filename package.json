@@ -1,6 +1,6 @@
 {
   "name": "url-query-to-prisma",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Express middleware to turn a url query into a formatted object suitable for inclusion in a Prisma ORM client query",
   "main": "index.js",
   "scripts": {
