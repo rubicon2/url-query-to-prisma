@@ -35,11 +35,14 @@ const defaultFormatter = {
     queryObj.temp.orderByPaths = orderByPaths;
   },
   sortOrder: (queryObj, key, value, options) => {
+    const discardOldValue = (x, y) => y;
+
     // If sortOrder runs before orderBy, just store the values for orderBy to use.
     if (!queryObj.temp.orderByPaths) {
       queryObj.temp.sortOrder = [value].flat();
       return;
     }
+
     const sortValues = Array.isArray(value) ? value : [value];
     // Use stored paths to create new object with new sortOrder values.
     let updatedOrderBy = {};
@@ -50,6 +53,7 @@ const defaultFormatter = {
         updatedOrderBy = deepMerge(
           updatedOrderBy,
           pathToNestedObj(currentPath, options.pathSeparator, currentValue),
+          discardOldValue,
         );
       } else {
         // If we have run out of orderByPaths, that means we have a sortOrder value and no more paths to match to.
@@ -59,7 +63,7 @@ const defaultFormatter = {
     }
     // Use mergeArraysInPlace to merge into existing orderBy array on queryObj.
     const updatedOrderByArray = objToArray(updatedOrderBy);
-    const discardOldValue = (x, y) => y;
+
     queryObj.orderBy = mergeArraysInPlace(
       queryObj.orderBy,
       updatedOrderByArray,

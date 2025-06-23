@@ -288,6 +288,67 @@ describe('defaultFormatter', () => {
     it.each([
       {
         query: {
+          orderBy: ['publishedDate', 'publishedDate'],
+          sortOrder: ['desc', 'asc'],
+        },
+        result: [
+          {
+            publishedDate: 'asc',
+          },
+        ],
+      },
+      {
+        query: {
+          orderBy: ['owner.name', 'owner.name'],
+          sortOrder: ['asc', 'desc'],
+        },
+        result: [
+          {
+            owner: { name: 'desc' },
+          },
+        ],
+      },
+      {
+        query: {
+          orderBy: ['owner.name', 'publishedDate', 'owner.name'],
+          sortOrder: ['asc', 'asc', 'desc'],
+        },
+        result: [
+          {
+            owner: { name: 'desc' },
+          },
+          {
+            publishedDate: 'asc',
+          },
+        ],
+      },
+      {
+        query: {
+          orderBy: ['owner.name', 'owner.name'],
+          sortOrder: ['desc'],
+        },
+        result: [
+          {
+            owner: { name: 'desc' },
+          },
+        ],
+      },
+    ])(
+      'should not break if multiple orderBy params are the same, and use last matching value',
+      ({ query, result }) => {
+        const req = httpMocks.createRequest({
+          ...basicRequest,
+          query,
+        });
+        const middleware = urlQueryToPrisma({}, { pathSeparator: '.' });
+        middleware(req, res, next);
+        expect(req.prismaQueryParams.orderBy).toEqual(result);
+      },
+    );
+
+    it.each([
+      {
+        query: {
           orderBy: 'publishedDate',
           sortOrder: 'desc',
         },
