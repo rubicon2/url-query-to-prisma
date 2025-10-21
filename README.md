@@ -1,5 +1,7 @@
 # url-query-to-prisma
 
+NOTE: this is no longer maintained, in favour of the more flexible [object-transformer](https://www.npmjs.com/package/@rubicon2/object-transformer) in conjunction with [object-transformer-prisma](https://www.npmjs.com/package/@rubicon2/object-transformer-prisma).
+
 Express middleware to turn a URL query/body into an object formatted to match the object shape to filter a Prisma ORM client query.
 
 Suitable for something like a blogs page where you want the user to be able to search for blogs by a particular user, date range or sort them into date order, etc.
